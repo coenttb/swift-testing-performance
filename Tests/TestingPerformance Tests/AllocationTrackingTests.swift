@@ -1,5 +1,5 @@
 // AllocationTrackingTests.swift
-// TestingPerformance Tests
+// TestingPerformance
 //
 // Memory allocation tracking tests
 

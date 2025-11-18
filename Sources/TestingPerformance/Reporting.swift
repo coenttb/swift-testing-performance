@@ -263,13 +263,25 @@ extension TestingPerformance {
 /// ```
 @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 public struct PerformanceSuite {
+    /// Name of the performance suite for reporting.
     public let name: String
     private var benchmarks: [(name: String, measurement: TestingPerformance.Measurement)] = []
 
+    /// Creates a new performance suite with the given name.
+    ///
+    /// - Parameter name: Display name for the suite in reports
     public init(name: String) {
         self.name = name
     }
 
+    /// Run and measure a synchronous benchmark operation.
+    ///
+    /// - Parameters:
+    ///   - name: Name of the benchmark
+    ///   - warmup: Number of warmup iterations (default: 0)
+    ///   - iterations: Number of measured iterations (default: 10)
+    ///   - operation: The operation to benchmark
+    /// - Returns: The result of the operation
     public mutating func benchmark<T>(
         _ name: String,
         warmup: Int = 0,
@@ -281,6 +293,14 @@ public struct PerformanceSuite {
         return result
     }
 
+    /// Run and measure an asynchronous benchmark operation.
+    ///
+    /// - Parameters:
+    ///   - name: Name of the benchmark
+    ///   - warmup: Number of warmup iterations (default: 0)
+    ///   - iterations: Number of measured iterations (default: 10)
+    ///   - operation: The async operation to benchmark
+    /// - Returns: The result of the operation
     public mutating func benchmark<T>(
         _ name: String,
         warmup: Int = 0,
@@ -292,6 +312,9 @@ public struct PerformanceSuite {
         return result
     }
 
+    /// Print a formatted report of all benchmarks in the suite.
+    ///
+    /// - Parameter metric: The metric to display for each benchmark (default: median)
     public func printReport(metric: TestingPerformance.Metric = .median) {
         let boxWidth = 58  // Inner width of the box (excluding borders)
         let centeredTitle = TestingPerformance.centerText(name, width: boxWidth)

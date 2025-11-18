@@ -1,5 +1,5 @@
 // ManualMeasurementTests.swift
-// TestingPerformance Tests
+// TestingPerformance
 //
 // Manual measurement API tests
 

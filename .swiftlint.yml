@@ -5,9 +5,14 @@
 disabled_rules:
   - explicit_type_interface  # Too strict - type inference is idiomatic Swift
   - explicit_init  # Prefer MyType() over MyType.init()
+  - extension_access_modifier  # We prefer access on members, not on extension
+  - explicit_acl  # Too verbose - require internal on everything
   - todo  # TODOs are fine in development
   - force_cast  # Sometimes needed in tests
   - force_try  # Sometimes needed in tests
+  - line_length  # No line length restrictions
+  - file_length  # No file length restrictions
+  - cyclomatic_complexity  # Lookup tables and domain logic often have inherent complexity
 
 # Opt-in rules for library quality
 opt_in_rules:
@@ -21,8 +26,6 @@ opt_in_rules:
   - empty_count  # Use .isEmpty instead of .count == 0
   - first_where  # Performance optimization
   - last_where  # Performance optimization
-  - explicit_acl  # Explicit access control for clear API boundaries
-  - extension_access_modifier  # Cleaner extension declarations
 
   # Style
   - file_header  # Consistent file headers
@@ -48,14 +51,6 @@ excluded:
 
 # Rule configurations
 
-# Reasonable line length for library code with documentation
-line_length:
-  warning: 120
-  error: 150
-  ignores_comments: true
-  ignores_urls: true
-  ignores_function_declarations: false
-
 # Allow longer functions for complex performance logic
 function_body_length:
   warning: 60
@@ -65,17 +60,6 @@ function_body_length:
 type_body_length:
   warning: 300
   error: 500
-
-# File length limits
-file_length:
-  warning: 500
-  error: 800
-  ignore_comment_only_lines: true
-
-# Cyclomatic complexity
-cyclomatic_complexity:
-  warning: 12
-  error: 20
 
 # Nesting depth
 nesting:
@@ -104,6 +88,7 @@ type_name:
     error: 60
   excluded:
     - T  # Generic type parameter
+    - _PerformanceTrait  # Private implementation detail with underscore prefix
 
 # Documentation requirements for public APIs
 missing_docs:

@@ -1,5 +1,5 @@
-// Statistics Tests
-// TestingPerformance Tests
+// Statistics Tests.swift
+// TestingPerformance
 
 import Testing
 import TestingPerformance

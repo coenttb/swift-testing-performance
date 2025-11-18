@@ -1,5 +1,5 @@
-// Percentile Tests
-// TestingPerformance Tests
+// Percentile Tests.swift
+// TestingPerformance
 
 import Testing
 import TestingPerformance

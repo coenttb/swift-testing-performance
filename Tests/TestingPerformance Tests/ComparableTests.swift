@@ -1,5 +1,5 @@
-// Comparable Tests
-// TestingPerformance Tests
+// Comparable Tests.swift
+// TestingPerformance
 
 import Testing
 import TestingPerformance

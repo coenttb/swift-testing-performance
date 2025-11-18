@@ -1,5 +1,5 @@
 // BasicPerformanceTests.swift
-// TestingPerformance Tests
+// TestingPerformance
 //
 // Basic performance measurement tests
 

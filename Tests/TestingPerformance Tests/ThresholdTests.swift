@@ -1,5 +1,5 @@
-// Threshold Tests
-// TestingPerformance Tests
+// Threshold Tests.swift
+// TestingPerformance
 
 import Testing
 import TestingPerformance

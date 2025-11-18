@@ -279,7 +279,7 @@ extension TestingPerformance {
         // Measure
         var durations: [Duration] = []
         durations.reserveCapacity(iterations)
-        var lastResult: T!
+        var lastResult: T?
 
         for _ in 0..<iterations {
             let start = ContinuousClock.now
@@ -288,7 +288,8 @@ extension TestingPerformance {
             durations.append(end - start)
         }
 
-        return (lastResult, TestingPerformance.Measurement(durations: durations))
+        // Force unwrap is safe here because iterations must be > 0 for valid measurements
+        return (lastResult!, TestingPerformance.Measurement(durations: durations))
     }
 
     /// Measure performance of an async operation
@@ -306,7 +307,7 @@ extension TestingPerformance {
         // Measure
         var durations: [Duration] = []
         durations.reserveCapacity(iterations)
-        var lastResult: T!
+        var lastResult: T?
 
         for _ in 0..<iterations {
             let start = ContinuousClock.now
@@ -315,7 +316,8 @@ extension TestingPerformance {
             durations.append(end - start)
         }
 
-        return (lastResult, TestingPerformance.Measurement(durations: durations))
+        // Force unwrap is safe here because iterations must be > 0 for valid measurements
+        return (lastResult!, TestingPerformance.Measurement(durations: durations))
     }
 
     /// Single-shot timing measurement
@@ -353,10 +355,15 @@ extension TestingPerformance {
 extension TestingPerformance {
     /// Format options for duration display
     public enum Format {
+        /// Automatically select the most appropriate unit
         case auto
+        /// Display in nanoseconds (ns)
         case nanoseconds
+        /// Display in microseconds (µs)
         case microseconds
+        /// Display in milliseconds (ms)
         case milliseconds
+        /// Display in seconds (s)
         case seconds
 
         func format(_ duration: Duration) -> String {

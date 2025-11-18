@@ -1,5 +1,5 @@
 // PerformanceAssertionTests.swift
-// TestingPerformance Tests
+// TestingPerformance
 //
 // Performance assertion API tests
 

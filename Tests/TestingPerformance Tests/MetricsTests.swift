@@ -1,5 +1,5 @@
 // MetricsTests.swift
-// TestingPerformance Tests
+// TestingPerformance
 //
 // Performance metrics calculation tests
 

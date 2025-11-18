@@ -1,5 +1,5 @@
 // PerformanceSuiteTests.swift
-// TestingPerformance Tests
+// TestingPerformance
 //
 // PerformanceSuite tests
 
