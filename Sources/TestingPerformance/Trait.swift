@@ -10,7 +10,7 @@
 #endif
 
 #if canImport(Testing)
-    import Testing
+    @_exported import Testing
 
     #if compiler(>=6.0)
 
