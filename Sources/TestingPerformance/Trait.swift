@@ -52,6 +52,21 @@
                     return
                 }
 
+                // Initialize leak detector if requested
+                let leakDetector: MemoryAllocation.LeakDetector? = config.detectLeaks ? LeakDetector() : nil
+
+                // Initialize peak memory tracker if requested or needed
+                let peakTracker: MemoryAllocation.PeakMemoryTracker? =
+                    (config.peakMemoryLimit != nil || config.printResults)
+                        ? PeakMemoryTracker() : nil
+
+                #if os(Linux)
+                    // Start tracking on Linux if we need allocation stats
+                    if config.maxAllocations != nil || config.detectLeaks || peakTracker != nil {
+                        MemoryAllocation.AllocationStats.startTracking()
+                    }
+                #endif
+
                 // Warmup
                 for _ in 0..<config.warmup {
                     try await function()
@@ -62,38 +77,30 @@
                 var allocationDeltas: [Int] = []
 
                 for _ in 0..<config.iterations {
-                    #if os(Linux)
-                        if config.maxAllocations != nil {
-                            TestingPerformance.startTracking()
-                        }
-                    #endif
-
-                    let startStats = TestingPerformance.captureAllocationStats()
-                    let start = ContinuousClock.now
-                    try await function()
-                    let duration = ContinuousClock.now - start
-                    let endStats = TestingPerformance.captureAllocationStats()
+                    // Use AllocationTracker.measure() for cleaner allocation tracking
+                    let (_, duration, stats) = try await measureWithAllocations(function)
 
                     durations.append(duration)
 
-                    // Track allocation delta if we're monitoring allocations
+                    // Track allocation delta if monitoring allocations
                     if config.maxAllocations != nil {
-                        let delta = TestingPerformance.AllocationStats.delta(
-                            from: startStats,
-                            to: endStats
-                        )
-                        allocationDeltas.append(delta.bytesAllocated)
+                        allocationDeltas.append(stats.bytesAllocated)
                     }
+
+                    // Sample peak memory if tracking
+                    peakTracker?.sample()
                 }
 
                 let measurement = TestingPerformance.Measurement(durations: durations)
 
                 // Print if requested
                 if config.printResults {
+                    let peakBytes = peakTracker?.peakBytes
                     TestingPerformance.printPerformance(
                         name,
                         measurement,
-                        allocations: allocationDeltas.isEmpty ? nil : allocationDeltas
+                        allocations: allocationDeltas.isEmpty ? nil : allocationDeltas,
+                        peakMemory: peakBytes
                     )
                 }
 
@@ -122,10 +129,39 @@
                     }
                 }
 
-                // TODO: Baseline tracking not yet implemented
-                // if let baselineName = config.baselineName {
-                //     try await checkBaseline(...)
-                // }
+                // Check for memory leaks if requested
+                if let detector = leakDetector {
+                    if detector.hasLeaks() {
+                        throw TestingPerformance.Error.memoryLeakDetected(
+                            test: name,
+                            netAllocations: detector.netAllocations,
+                            netBytes: detector.netBytes
+                        )
+                    }
+                }
+
+                // Check peak memory limit if set
+                if let limit = config.peakMemoryLimit, let tracker = peakTracker {
+                    guard tracker.peakBytes <= limit else {
+                        throw TestingPerformance.Error.peakMemoryExceeded(
+                            test: name,
+                            limit: limit,
+                            actual: tracker.peakBytes
+                        )
+                    }
+                }
+            }
+
+            // Helper to measure both duration and allocations using AllocationTracker
+            private func measureWithAllocations(
+                _ function: @Sendable () async throws -> Void
+            ) async throws -> (Void, Duration, MemoryAllocation.AllocationStats) {
+                let start = ContinuousClock.now
+                let (_, stats) = try await MemoryAllocation.AllocationTracker.measure {
+                    try await function()
+                }
+                let duration = ContinuousClock.now - start
+                return ((), duration, stats)
             }
         }
 
@@ -139,6 +175,8 @@
                 var threshold: Duration?
                 var metric: Metric
                 var maxAllocations: Int?
+                var detectLeaks: Bool
+                var peakMemoryLimit: Int?
 
                 init(
                     enabled: Bool = true,
@@ -147,7 +185,9 @@
                     printResults: Bool = false,
                     threshold: Duration? = nil,
                     metric: Metric = .median,
-                    maxAllocations: Int? = nil
+                    maxAllocations: Int? = nil,
+                    detectLeaks: Bool = false,
+                    peakMemoryLimit: Int? = nil
                 ) {
                     self.enabled = enabled
                     self.iterations = iterations
@@ -156,6 +196,8 @@
                     self.threshold = threshold
                     self.metric = metric
                     self.maxAllocations = maxAllocations
+                    self.detectLeaks = detectLeaks
+                    self.peakMemoryLimit = peakMemoryLimit
                 }
 
                 func merged(with other: Configuration) -> Configuration {
@@ -166,7 +208,9 @@
                         printResults: other.printResults,
                         threshold: other.threshold ?? self.threshold,
                         metric: other.metric,
-                        maxAllocations: other.maxAllocations ?? self.maxAllocations
+                        maxAllocations: other.maxAllocations ?? self.maxAllocations,
+                        detectLeaks: other.detectLeaks,
+                        peakMemoryLimit: other.peakMemoryLimit ?? self.peakMemoryLimit
                     )
                 }
             }
@@ -227,7 +271,9 @@
                 warmup: Int = 0,
                 threshold: Duration? = nil,
                 maxAllocations: Int? = nil,
-                metric: TestingPerformance.Metric = .median
+                metric: TestingPerformance.Metric = .median,
+                detectLeaks: Bool = false,
+                peakMemoryLimit: Int? = nil
             ) -> Self {
                 Self(
                     configuration: TestingPerformance.Configuration(
@@ -236,7 +282,49 @@
                         printResults: true,
                         threshold: threshold,
                         metric: metric,
-                        maxAllocations: maxAllocations
+                        maxAllocations: maxAllocations,
+                        detectLeaks: detectLeaks,
+                        peakMemoryLimit: peakMemoryLimit
+                    )
+                )
+            }
+
+            /// Enable memory leak detection for performance tests
+            ///
+            /// Automatically detects memory leaks during test execution.
+            /// Test fails if net allocations remain after completion.
+            ///
+            /// ```swift
+            /// @Test(.timed(), .detectLeaks())
+            /// func `no memory leaks`() {
+            ///     // Test automatically fails if memory leaks
+            /// }
+            /// ```
+            public static func detectLeaks() -> Self {
+                Self(
+                    configuration: TestingPerformance.Configuration(
+                        detectLeaks: true
+                    )
+                )
+            }
+
+            /// Track peak memory usage with optional limit
+            ///
+            /// Monitors peak memory throughout test iterations.
+            /// Test fails if peak exceeds specified limit.
+            ///
+            /// ```swift
+            /// @Test(.timed(), .trackPeakMemory(limit: 10_000_000))
+            /// func `stay under memory budget`() {
+            ///     // Test fails if peak memory exceeds 10MB
+            /// }
+            /// ```
+            ///
+            /// - Parameter limit: Optional maximum peak memory in bytes
+            public static func trackPeakMemory(limit: Int? = nil) -> Self {
+                Self(
+                    configuration: TestingPerformance.Configuration(
+                        peakMemoryLimit: limit
                     )
                 )
             }

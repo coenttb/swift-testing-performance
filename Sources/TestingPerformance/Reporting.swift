@@ -21,7 +21,8 @@ extension TestingPerformance {
     public static func printPerformance(
         _ name: String,
         _ measurement: TestingPerformance.Measurement,
-        allocations: [Int]? = nil
+        allocations: [Int]? = nil,
+        peakMemory: Int? = nil
     ) {
         var output = """
             ⏱️ \(name)
@@ -47,6 +48,13 @@ extension TestingPerformance {
                      Median:   \(formatBytes(allocations.sorted()[allocations.count / 2]))
                      Max:      \(formatBytes(maxAlloc))
                      Avg:      \(formatBytes(avgAlloc))
+                """
+        }
+
+        if let peak = peakMemory {
+            output += """
+
+                   Peak Memory: \(formatBytes(peak))
                 """
         }
 

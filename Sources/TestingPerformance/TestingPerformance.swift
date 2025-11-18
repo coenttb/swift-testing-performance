@@ -138,6 +138,28 @@ extension TestingPerformance {
         ///   - actual: Actual bytes allocated during the test
         case allocationLimitExceeded(test: String, limit: Int, actual: Int)
 
+        /// Memory leak was detected during test execution.
+        ///
+        /// Thrown when a test with `.detectLeaks()` trait has net positive allocations
+        /// remaining after test completion.
+        ///
+        /// - Parameters:
+        ///   - test: Name of the failing test
+        ///   - netAllocations: Number of allocations that were not deallocated
+        ///   - netBytes: Total bytes that were not deallocated
+        case memoryLeakDetected(test: String, netAllocations: Int, netBytes: Int)
+
+        /// Peak memory limit was exceeded during test execution.
+        ///
+        /// Thrown when a test with `.trackPeakMemory(limit:)` exceeds the specified
+        /// peak memory budget.
+        ///
+        /// - Parameters:
+        ///   - test: Name of the failing test
+        ///   - limit: Maximum allowed peak memory in bytes
+        ///   - actual: Actual peak memory usage in bytes
+        case peakMemoryExceeded(test: String, limit: Int, actual: Int)
+
         /// Performance expectation assertion failed.
         ///
         /// Thrown by ``TestingPerformance/expectPerformance(lessThan:warmup:iterations:metric:operation:)-5llun``
@@ -182,6 +204,21 @@ extension TestingPerformance {
                     Memory allocation limit exceeded in '\(test)':
                     Limit: \(formatBytes(limit))
                     Actual: \(formatBytes(actual))
+                    Exceeded by: \(formatBytes(actual - limit))
+                    """
+
+            case .memoryLeakDetected(let test, let netAllocations, let netBytes):
+                return """
+                    Memory leak detected in '\(test)':
+                    Net allocations: \(netAllocations)
+                    Net bytes: \(formatBytes(netBytes))
+                    """
+
+            case .peakMemoryExceeded(let test, let limit, let actual):
+                return """
+                    Peak memory limit exceeded in '\(test)':
+                    Limit: \(formatBytes(limit))
+                    Actual peak: \(formatBytes(actual))
                     Exceeded by: \(formatBytes(actual - limit))
                     """
 
