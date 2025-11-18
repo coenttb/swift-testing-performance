@@ -34,14 +34,14 @@ extension TestingPerformance {
                Max:        \(formatDuration(measurement.max))
                StdDev:     \(formatDuration(measurement.standardDeviation))
             """
-        
+
         if let allocations = allocations, !allocations.isEmpty {
             let minAlloc = allocations.min() ?? 0
             let maxAlloc = allocations.max() ?? 0
             let avgAlloc = allocations.reduce(0, +) / allocations.count
-            
+
             output += """
-            
+
                Allocations:
                  Min:      \(formatBytes(minAlloc))
                  Median:   \(formatBytes(allocations.sorted()[allocations.count / 2]))
@@ -49,10 +49,10 @@ extension TestingPerformance {
                  Avg:      \(formatBytes(avgAlloc))
             """
         }
-        
+
         print(output)
     }
-    
+
     private static func formatBytes(_ bytes: Int) -> String {
         if bytes == 0 {
             return "0 bytes"
@@ -66,23 +66,23 @@ extension TestingPerformance {
             return formatNumber(Double(bytes) / (1024.0 * 1024.0 * 1024.0), decimals: 2) + " GB"
         }
     }
-    
+
     private static func formatNumber(_ value: Double, decimals: Int) -> String {
         let multiplier = pow(10.0, Double(decimals))
         let rounded = (value * multiplier).rounded() / multiplier
-        
+
         let integerPart = Int(rounded)
         let fractionalPart = rounded - Double(integerPart)
-        
+
         if fractionalPart == 0 {
             return "\(integerPart).\(String(repeating: "0", count: decimals))"
         }
-        
+
         var fractionStr = "\(Int((fractionalPart * multiplier).rounded()))"
         while fractionStr.count < decimals {
             fractionStr = "0" + fractionStr
         }
-        
+
         return "\(integerPart).\(fractionStr)"
     }
 }
@@ -142,7 +142,7 @@ public struct PerformanceComparison: Sendable {
     public let current: TestingPerformance.Measurement
     public let baseline: TestingPerformance.Measurement
     public let metric: TestingPerformance.Metric
-    
+
     public init(
         name: String,
         current: TestingPerformance.Measurement,
@@ -154,27 +154,27 @@ public struct PerformanceComparison: Sendable {
         self.baseline = baseline
         self.metric = metric
     }
-    
+
     public var currentValue: Duration {
         metric.extract(from: current)
     }
-    
+
     public var baselineValue: Duration {
         metric.extract(from: baseline)
     }
-    
+
     public var change: Double {
         (currentValue.inSeconds - baselineValue.inSeconds) / baselineValue.inSeconds
     }
-    
+
     public var isRegression: Bool {
         change > 0
     }
-    
+
     public var isImprovement: Bool {
         change < 0
     }
-    
+
     public func formatted() -> String {
         let changePercent = abs(change) * 100
         let changeSymbol = isRegression ? "↑" : "↓"
@@ -197,18 +197,18 @@ public struct PerformanceComparison: Sendable {
                 Change:   \(changeColored)
             """
     }
-    
+
     private func formatPercent(_ value: Double) -> String {
         let multiplier = 10.0
         let rounded = (value * multiplier).rounded() / multiplier
-        
+
         let integerPart = Int(rounded)
         let fractionalPart = rounded - Double(integerPart)
-        
+
         if fractionalPart == 0 {
             return "\(integerPart).0"
         }
-        
+
         let fractionStr = "\(Int((fractionalPart * multiplier).rounded()))"
         return "\(integerPart).\(fractionStr)"
     }
@@ -265,11 +265,11 @@ extension TestingPerformance {
 public struct PerformanceSuite {
     public let name: String
     private var benchmarks: [(name: String, measurement: TestingPerformance.Measurement)] = []
-    
+
     public init(name: String) {
         self.name = name
     }
-    
+
     public mutating func benchmark<T>(
         _ name: String,
         warmup: Int = 0,
@@ -280,7 +280,7 @@ public struct PerformanceSuite {
         benchmarks.append((name, measurement))
         return result
     }
-    
+
     public mutating func benchmark<T>(
         _ name: String,
         warmup: Int = 0,
@@ -291,7 +291,7 @@ public struct PerformanceSuite {
         benchmarks.append((name, measurement))
         return result
     }
-    
+
     public func printReport(metric: TestingPerformance.Metric = .median) {
         let boxWidth = 58  // Inner width of the box (excluding borders)
         let centeredTitle = TestingPerformance.centerText(name, width: boxWidth)
@@ -310,7 +310,7 @@ public struct PerformanceSuite {
 
         print("\n╚══════════════════════════════════════════════════════════╝\n")
     }
-    
+
     private func padRight(_ string: String, toLength length: Int) -> String {
         if string.count >= length {
             return string

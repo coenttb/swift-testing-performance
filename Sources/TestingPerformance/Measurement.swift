@@ -275,22 +275,22 @@ extension TestingPerformance {
         for _ in 0..<warmup {
             _ = operation()
         }
-        
+
         // Measure
         var durations: [Duration] = []
         durations.reserveCapacity(iterations)
         var lastResult: T!
-        
+
         for _ in 0..<iterations {
             let start = ContinuousClock.now
             lastResult = operation()
             let end = ContinuousClock.now
             durations.append(end - start)
         }
-        
+
         return (lastResult, TestingPerformance.Measurement(durations: durations))
     }
-    
+
     /// Measure performance of an async operation
     @discardableResult
     public static func measure<T>(
@@ -302,22 +302,22 @@ extension TestingPerformance {
         for _ in 0..<warmup {
             _ = try await operation()
         }
-        
+
         // Measure
         var durations: [Duration] = []
         durations.reserveCapacity(iterations)
         var lastResult: T!
-        
+
         for _ in 0..<iterations {
             let start = ContinuousClock.now
             lastResult = try await operation()
             let end = ContinuousClock.now
             durations.append(end - start)
         }
-        
+
         return (lastResult, TestingPerformance.Measurement(durations: durations))
     }
-    
+
     /// Single-shot timing measurement
     ///
     /// Times a single execution without statistical analysis.
@@ -336,7 +336,7 @@ extension TestingPerformance {
         let end = ContinuousClock.now
         return (result, end - start)
     }
-    
+
     /// Single-shot timing measurement for async operations
     @discardableResult
     public static func time<T>(operation: () async throws -> T) async rethrows -> (result: T, duration: Duration) {
@@ -358,7 +358,7 @@ extension TestingPerformance {
         case microseconds
         case milliseconds
         case seconds
-        
+
         func format(_ duration: Duration) -> String {
             switch self {
             case .auto:
@@ -382,23 +382,23 @@ extension TestingPerformance {
                 return formatNumber(duration.inSeconds, decimals: 2) + "s"
             }
         }
-        
+
         private func formatNumber(_ value: Double, decimals: Int) -> String {
             let multiplier = pow(10.0, Double(decimals))
             let rounded = (value * multiplier).rounded() / multiplier
-            
+
             let integerPart = Int(rounded)
             let fractionalPart = rounded - Double(integerPart)
-            
+
             if fractionalPart == 0 {
                 return "\(integerPart).\(String(repeating: "0", count: decimals))"
             }
-            
+
             var fractionStr = "\(Int((fractionalPart * multiplier).rounded()))"
             while fractionStr.count < decimals {
                 fractionStr = "0" + fractionStr
             }
-            
+
             return "\(integerPart).\(fractionStr)"
         }
     }

@@ -1,0 +1,136 @@
+# SwiftFormat Configuration for TestingPerformance
+# Aligned with modern Swift conventions and library best practices
+
+# Format options
+--swiftversion 6.0
+
+# Indentation
+--indent 4
+--tabwidth 4
+--indentcase false
+--ifdef indent
+--xcodeindentation disabled
+
+# Wrapping
+--maxwidth 120
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--closingparen balanced
+
+# Spacing
+--trimwhitespace always
+--voidtype void  # Use Void, not ()
+--empty void  # Use foo() not foo(Void)
+
+# Organization
+--importgrouping testable-bottom
+--extensionacl on-declarations  # Matches user's preference: extensions for organization
+
+# Braces and parentheses
+--elseposition same-line
+--guardelse same-line
+
+# Sorting
+--sortimports alpha  # Alphabetically sorted imports
+
+# Enumerations
+--enumnamespaces always  # Use enums for namespaces (like TestingPerformance)
+
+# Redundancy
+--redundanttype inferred  # Remove redundant type annotations (opposite of explicit_type_interface!)
+--redundantbackticks false
+--redundantbreak remove
+--redundantextensionacl false  # Keep explicit ACL in extensions
+--redundantfileprivate false
+--redundantget true
+--redundantinit remove
+--redundantobjc remove
+--redundantparens remove
+--redundantpattern true
+--redundantrawvalues true
+--redundantreturn remove
+--redundantself remove
+--redundantvoidreturntype remove
+
+# Modern Swift features
+--swiftversion 6.0
+--selfrequired init-only  # Only require self in init
+
+# Disabled rules (preserve intentional patterns)
+--disable blankLinesAtEndOfScope  # Allow flexibility
+--disable blankLinesAtStartOfScope  # Allow flexibility
+
+# Enabled rules
+--enable isEmpty
+--enable sortImports
+
+# File headers
+--header "// {file}\n// TestingPerformance\n//\n// {created}"
+
+# Experimental
+--experimental
+
+# Rules to explicitly enable
+--rules \
+  andOperator, \
+  anyObjectProtocol, \
+  blankLinesBetweenScopes, \
+  consecutiveBlankLines, \
+  consecutiveSpaces, \
+  duplicateImports, \
+  elseOnSameLine, \
+  emptyBraces, \
+  enumNamespaces, \
+  extensionAccessControl, \
+  hoistPatternLet, \
+  indent, \
+  isEmpty, \
+  leadingDelimiters, \
+  linebreakAtEndOfFile, \
+  numberFormatting, \
+  redundantBackticks, \
+  redundantBreak, \
+  redundantExtensionACL, \
+  redundantGet, \
+  redundantInit, \
+  redundantLet, \
+  redundantLetError, \
+  redundantNilInit, \
+  redundantObjc, \
+  redundantParens, \
+  redundantPattern, \
+  redundantRawValues, \
+  redundantReturn, \
+  redundantSelf, \
+  redundantType, \
+  redundantVoidReturnType, \
+  semicolons, \
+  sortImports, \
+  spaceAroundBraces, \
+  spaceAroundBrackets, \
+  spaceAroundComments, \
+  spaceAroundGenerics, \
+  spaceAroundOperators, \
+  spaceAroundParens, \
+  spaceInsideBraces, \
+  spaceInsideBrackets, \
+  spaceInsideComments, \
+  spaceInsideGenerics, \
+  spaceInsideParens, \
+  strongOutlets, \
+  strongifiedSelf, \
+  todos, \
+  trailingClosures, \
+  trailingCommas, \
+  trailingSpace, \
+  typeSugar, \
+  void, \
+  wrap, \
+  wrapArguments, \
+  wrapEnumCases, \
+  yodaConditions
+
+# Exclude paths
+--exclude .build,
+          .swiftpm

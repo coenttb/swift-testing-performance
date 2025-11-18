@@ -41,7 +41,7 @@ extension TestingPerformance {
 
         return (result, measurement)
     }
-    
+
     /// Assert that an async operation completes within a duration threshold
     @discardableResult
     public static func expectPerformance<T>(
@@ -77,7 +77,7 @@ extension TestingPerformance {
         case mean
         case p95
         case p99
-        
+
         public func extract(from measurement: Measurement) -> Duration {
             switch self {
             case .min: return measurement.min
@@ -129,18 +129,18 @@ extension TestingPerformance {
             )
         }
     }
-    
+
     private static func formatPercent(_ value: Double) -> String {
         let multiplier = 10.0
         let rounded = (value * multiplier).rounded() / multiplier
-        
+
         let integerPart = Int(rounded)
         let fractionalPart = rounded - Double(integerPart)
-        
+
         if fractionalPart == 0 {
             return "\(integerPart).0"
         }
-        
+
         let fractionStr = "\(Int((fractionalPart * multiplier).rounded()))"
         return "\(integerPart).\(fractionStr)"
     }

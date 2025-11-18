@@ -1,13 +1,127 @@
+# SwiftLint Configuration for TestingPerformance
+# Optimized for library/framework development
+
+# Disabled rules
 disabled_rules:
-  - line_length
-  - function_body_length
-  - type_body_length
-  - file_length
+  - explicit_type_interface  # Too strict - type inference is idiomatic Swift
+  - explicit_init  # Prefer MyType() over MyType.init()
+  - todo  # TODOs are fine in development
+  - force_cast  # Sometimes needed in tests
+  - force_try  # Sometimes needed in tests
+
+# Opt-in rules for library quality
 opt_in_rules:
-  - explicit_init
-  - explicit_type_interface
+  # Documentation
+  - missing_docs  # Public APIs should be documented
+
+  # Code quality
+  - sorted_imports  # Keep imports organized
+  - closure_spacing  # Consistent closure formatting
+  - contains_over_first_not_nil  # Performance optimization
+  - empty_count  # Use .isEmpty instead of .count == 0
+  - first_where  # Performance optimization
+  - last_where  # Performance optimization
+  - explicit_acl  # Explicit access control for clear API boundaries
+  - extension_access_modifier  # Cleaner extension declarations
+
+  # Style
+  - file_header  # Consistent file headers
+  - multiline_parameters  # Better formatted parameter lists
+  - operator_usage_whitespace  # Consistent operator spacing
+  - vertical_parameter_alignment_on_call  # Aligned parameters
+
+  # Safety
+  - array_init  # Safer array initialization
+  - fatal_error_message  # Require messages in fatalError
+  - implicitly_unwrapped_optional  # Avoid IUOs where possible
+  - legacy_random  # Use modern random APIs
+  - overridden_super_call  # Ensure super is called
+
+# Paths
 included:
   - Sources
   - Tests
+
 excluded:
   - .build
+  - .swiftpm
+
+# Rule configurations
+
+# Reasonable line length for library code with documentation
+line_length:
+  warning: 120
+  error: 150
+  ignores_comments: true
+  ignores_urls: true
+  ignores_function_declarations: false
+
+# Allow longer functions for complex performance logic
+function_body_length:
+  warning: 60
+  error: 100
+
+# Allow larger types for comprehensive test suites
+type_body_length:
+  warning: 300
+  error: 500
+
+# File length limits
+file_length:
+  warning: 500
+  error: 800
+  ignore_comment_only_lines: true
+
+# Cyclomatic complexity
+cyclomatic_complexity:
+  warning: 12
+  error: 20
+
+# Nesting depth
+nesting:
+  type_level: 2
+
+# Identifier naming
+identifier_name:
+  min_length: 1  # Allow single-letter names in closures
+  max_length:
+    warning: 50
+    error: 60
+  excluded:
+    - id
+    - p  # For percentiles
+    - p50
+    - p75
+    - p90
+    - p95
+    - p99
+
+# Type name
+type_name:
+  min_length: 3
+  max_length:
+    warning: 50
+    error: 60
+  excluded:
+    - T  # Generic type parameter
+
+# Documentation requirements for public APIs
+missing_docs:
+  warning: public
+  excludes_extensions: true
+  excludes_inherited_types: true
+
+# File header pattern
+file_header:
+  required_pattern: |
+                    \/\/ .*\.swift
+                    \/\/ TestingPerformance
+
+# Custom rules
+custom_rules:
+  # Ensure performance-critical code is marked
+  performance_comment:
+    name: "Performance Comment"
+    regex: '@inline'
+    message: "Consider documenting why @inline is needed"
+    severity: warning

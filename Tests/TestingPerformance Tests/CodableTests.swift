@@ -1,9 +1,9 @@
 // Codable Tests
 // TestingPerformance Tests
 
+import Foundation
 import Testing
 import TestingPerformance
-import Foundation
 
 extension PerformanceTests {
     @Test("Codable - encode and decode measurement")
