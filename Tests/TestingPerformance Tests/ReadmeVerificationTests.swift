@@ -26,7 +26,10 @@ struct ReadmeVerificationTests {
         _ = numbers.reduce(0, +)
     }
 
-    @Test("Memory allocation tracking example from README", .timed(threshold: .milliseconds(100), maxAllocations: 600_000))
+    @Test(
+        "Memory allocation tracking example from README",
+        .timed(threshold: .milliseconds(100), maxAllocations: 600_000)
+    )
     func memoryAllocationTracking() {
         // Example from "Memory Allocation Tracking" section
         // Using higher thresholds to ensure test passes
@@ -64,7 +67,11 @@ struct ReadmeVerificationTests {
         _ = data.count
     }
 
-    @Test("Combining traits example from README", .timed(threshold: .milliseconds(100)), .trackPeakMemory(limit: 50_000_000))
+    @Test(
+        "Combining traits example from README",
+        .timed(threshold: .milliseconds(100)),
+        .trackPeakMemory(limit: 50_000_000)
+    )
     func combiningTraits() {
         // Example from "Combining Traits" section
         // Note: Removing .detectLeaks() to avoid false positives from background allocations
@@ -205,13 +212,16 @@ struct ReadmeVerificationTests {
 
     // MARK: - Trait API Configuration Example
 
-    @Test("Full trait configuration example from README", .timed(
-        iterations: 10,
-        warmup: 0,
-        threshold: .milliseconds(100),
-        maxAllocations: 600_000,
-        metric: .median
-    ))
+    @Test(
+        "Full trait configuration example from README",
+        .timed(
+            iterations: 10,
+            warmup: 0,
+            threshold: .milliseconds(100),
+            maxAllocations: 600_000,
+            metric: .median
+        )
+    )
     func fullTraitConfiguration() {
         // Example from "Trait API" section
         let numbers = Array(1...10_000)
@@ -220,10 +230,13 @@ struct ReadmeVerificationTests {
 
     // MARK: - Metric Selection Example
 
-    @Test("P95 threshold example from README", .timed(
-        threshold: .milliseconds(100),
-        metric: .p95
-    ))
+    @Test(
+        "P95 threshold example from README",
+        .timed(
+            threshold: .milliseconds(100),
+            metric: .p95
+        )
+    )
     func p95Threshold() {
         // Example from "Performance Metrics" section
         let numbers = Array(1...100_000)
@@ -241,7 +254,7 @@ struct ReadmeVerificationTests {
                 .milliseconds(12),
                 .milliseconds(11),
                 .milliseconds(13),
-                .milliseconds(10)
+                .milliseconds(10),
             ]
         )
 
@@ -273,7 +286,7 @@ struct ReadmeVerificationTests {
                 .milliseconds(11),
                 .milliseconds(12),
                 .milliseconds(13),
-                .milliseconds(14)
+                .milliseconds(14),
             ]
         )
 
