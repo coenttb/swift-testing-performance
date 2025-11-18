@@ -1,5 +1,5 @@
 // MetricsTests.swift
-// TestingPerformance Tests
+// TestingPerformance
 //
 // Performance metrics calculation tests
 
@@ -53,8 +53,9 @@ extension PerformanceTests {
             )
 
             // Mean = (10 + 20 + 30) / 3 = 20
-            let meanMs = measurement.mean.components.seconds * 1000 +
-                         measurement.mean.components.attoseconds / 1_000_000_000_000_000
+            let meanMs =
+                measurement.mean.components.seconds * 1000 + measurement.mean.components.attoseconds
+                / 1_000_000_000_000_000
             #expect(meanMs == 20)
         }
 
@@ -84,7 +85,9 @@ extension PerformanceTests {
 
             #expect(TestingPerformance.Metric.min.extract(from: measurement) == measurement.min)
             #expect(TestingPerformance.Metric.max.extract(from: measurement) == measurement.max)
-            #expect(TestingPerformance.Metric.median.extract(from: measurement) == measurement.median)
+            #expect(
+                TestingPerformance.Metric.median.extract(from: measurement) == measurement.median
+            )
             #expect(TestingPerformance.Metric.mean.extract(from: measurement) == measurement.mean)
             #expect(TestingPerformance.Metric.p95.extract(from: measurement) == measurement.p95)
             #expect(TestingPerformance.Metric.p99.extract(from: measurement) == measurement.p99)

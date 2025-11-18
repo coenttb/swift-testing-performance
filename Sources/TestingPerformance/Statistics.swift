@@ -4,9 +4,9 @@
 // Statistical significance testing
 
 #if canImport(Darwin)
-import Darwin
+    import Darwin
 #elseif canImport(Glibc)
-import Glibc
+    import Glibc
 #endif
 
 @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
@@ -163,57 +163,48 @@ extension TestingPerformance.Measurement {
     private func tCritical(df: Double, alpha: Double) -> Double {
         // For very large df (>100), t-distribution approaches normal distribution
         if df > 100 {
-            // Z-scores for common alpha values (two-tailed)
-            if alpha <= 0.001 {
-                return 3.291  // 99.9% confidence
-            } else if alpha <= 0.01 {
-                return 2.576  // 99% confidence
-            } else if alpha <= 0.025 {
-                return 1.96   // 95% confidence
-            } else if alpha <= 0.05 {
-                return 1.645  // 90% confidence
-            } else {
-                return 1.282  // 80% confidence
-            }
+            return Self.zScore(alpha: alpha)
         }
 
         // Approximation for smaller df using lookup table
         // Common values for two-tailed 95% confidence (alpha = 0.025)
         if alpha <= 0.03 && alpha >= 0.02 {
-            if df < 2 {
-                return 12.706
-            } else if df < 3 {
-                return 4.303
-            } else if df < 4 {
-                return 3.182
-            } else if df < 5 {
-                return 2.776
-            } else if df < 6 {
-                return 2.571
-            } else if df < 7 {
-                return 2.447
-            } else if df < 8 {
-                return 2.365
-            } else if df < 9 {
-                return 2.306
-            } else if df < 10 {
-                return 2.262
-            } else if df < 15 {
-                return 2.145
-            } else if df < 20 {
-                return 2.093
-            } else if df < 30 {
-                return 2.042
-            } else if df < 40 {
-                return 2.021
-            } else if df < 60 {
-                return 2.000
-            } else {
-                return 1.980
-            }
+            return Self.tValue95Confidence(df: df)
         }
 
         // Fallback: use normal approximation
         return 1.96
+    }
+
+    /// Z-scores for common alpha values (two-tailed)
+    private static func zScore(alpha: Double) -> Double {
+        switch alpha {
+        case ...0.001: return 3.291  // 99.9% confidence
+        case ...0.01: return 2.576  // 99% confidence
+        case ...0.025: return 1.96  // 95% confidence
+        case ...0.05: return 1.645  // 90% confidence
+        default: return 1.282  // 80% confidence
+        }
+    }
+
+    /// T-distribution critical values for 95% confidence (alpha = 0.025)
+    private static func tValue95Confidence(df: Double) -> Double {
+        switch df {
+        case ..<2: return 12.706
+        case ..<3: return 4.303
+        case ..<4: return 3.182
+        case ..<5: return 2.776
+        case ..<6: return 2.571
+        case ..<7: return 2.447
+        case ..<8: return 2.365
+        case ..<9: return 2.306
+        case ..<10: return 2.262
+        case ..<15: return 2.145
+        case ..<20: return 2.093
+        case ..<30: return 2.042
+        case ..<40: return 2.021
+        case ..<60: return 2.000
+        default: return 1.980
+        }
     }
 }

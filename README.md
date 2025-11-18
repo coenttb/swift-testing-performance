@@ -17,8 +17,10 @@ The package enables performance regression detection in CI pipelines through tra
 - **Statistical Metrics**: Comprehensive analysis including min, median, mean, p95, p99, max, and standard deviation
 - **Performance Budgets**: Automatic test failures when median exceeds defined thresholds
 - **Memory Allocation Tracking**: Platform-specific malloc statistics to enforce zero-allocation algorithms
+- **Memory Leak Detection**: Automatic leak detection with `.detectLeaks()` trait powered by swift-memory-allocation
+- **Peak Memory Tracking**: Monitor and enforce peak memory budgets with `.trackPeakMemory(limit:)` trait
 - **Flexible Measurement API**: Both trait-based (`@Test(.timed())`) and manual (`TestingPerformance.measure()`) measurement
-- **Zero Dependencies**: Uses only Swift standard library, Testing framework, and platform math libraries (Darwin/Glibc)
+- **Cross-Platform**: Works on macOS/iOS/watchOS/tvOS and Linux
 - **High Precision**: Int128-based Duration division for attosecond-level precision
 
 ## Installation
@@ -102,6 +104,95 @@ Output includes allocation statistics:
 ```
 
 Median of 0 bytes proves the algorithm is allocation-free.
+
+### Memory Leak Detection
+
+Automatically detect memory leaks during test execution:
+
+```swift
+@Test(.timed(), .detectLeaks())
+func `no memory leaks in cache`() {
+    var cache: [String: Data] = [:]
+
+    // Add items
+    for i in 0..<100 {
+        cache["key\(i)"] = Data(count: 1024)
+    }
+
+    // Clear cache - test fails if memory not released
+    cache.removeAll()
+}
+```
+
+Test fails if net allocations remain after completion:
+```
+Memory leak detected in 'no memory leaks in cache':
+Net allocations: 15
+Net bytes: 102.40 KB
+```
+
+**Note**: Memory leak detection tracks net allocations during test execution. Background system allocations (runtime housekeeping, ARC cleanup) may occasionally trigger false positives. For reliable leak detection:
+- Use `.serialized` test execution to minimize interference
+- Test in controlled environments where possible
+- Focus on detecting significant leaks rather than zero allocations
+- Consider the operational environment when setting expectations
+
+### Peak Memory Tracking
+
+Monitor and enforce peak memory budgets:
+
+```swift
+@Test(.timed(), .trackPeakMemory(limit: 10_000_000))
+func `stay under 10MB budget`() {
+    var data: [[UInt8]] = []
+
+    for i in 0..<100 {
+        data.append(Array(repeating: UInt8(i), count: 10_000))
+    }
+
+    // Peak memory tracked across all iterations
+}
+```
+
+Output includes peak memory usage:
+```
+⏱️ `stay under 10MB budget`()
+   Iterations: 10
+   Min:        2.45ms
+   Median:     2.67ms
+   Mean:       2.71ms
+   p95:        3.12ms
+   p99:        3.12ms
+   Max:        3.12ms
+   StdDev:     185.23µs
+   Peak Memory: 9.77 MB
+```
+
+Test fails if peak exceeds limit:
+```
+Peak memory limit exceeded in 'stay under 10MB budget':
+Limit: 10.00 MB
+Actual peak: 12.45 MB
+Exceeded by: 2.45 MB
+```
+
+### Combining Traits
+
+Combine multiple performance and memory traits:
+
+```swift
+@Test(
+    .timed(threshold: .milliseconds(100)),
+    .detectLeaks(),
+    .trackPeakMemory(limit: 5_000_000)
+)
+func `comprehensive performance test`() {
+    // Test must:
+    // - Complete within 100ms
+    // - Not leak memory
+    // - Stay under 5MB peak memory
+}
+```
 
 ## Usage Examples
 
@@ -364,18 +455,25 @@ func `zero allocation test`() {
 }
 ```
 
-## Relationship to Swift Benchmark
+## Related Projects
+
+### swift-memory-allocation
+
+swift-testing-performance is built on [swift-memory-allocation](https://github.com/coenttb/swift-memory-allocation), which provides the underlying memory tracking infrastructure:
+
+- **AllocationTracker**: Measure memory allocations in code blocks
+- **LeakDetector**: Detect memory leaks by tracking net allocations
+- **PeakMemoryTracker**: Monitor peak memory usage over time
+- **AllocationProfiler**: Profile allocations with statistics and histograms
+
+While swift-memory-allocation provides low-level memory observability, swift-testing-performance integrates it seamlessly into Swift Testing with declarative traits and automatic failure reporting.
+
+### Swift Benchmark
 
 - **swift-testing-performance**: Regression testing with performance budgets in your Swift Testing suite for CI pipelines
 - **swift-benchmark**: Dedicated microbenchmarking for comparing algorithms across runs/machines with detailed analysis
 
 Use both: swift-testing-performance for CI regression gates, Benchmark for detailed performance profiling.
-
-## Related Packages
-
-- [swift-html](https://github.com/coenttb/swift-html) - A Swift DSL for type-safe HTML
-- [swift-css](https://github.com/coenttb/swift-css) - A Swift DSL for type-safe CSS
-- [coenttb-html](https://github.com/coenttb/coenttb-html) - Extends swift-html with additional functionality and integrations
 
 ## License
 

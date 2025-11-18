@@ -1,6 +1,5 @@
-// PerformanceTests.swift
-// TestingPerformance Tests/Support
-//
+// Performance Tests.swift
+// TestingPerformance
 // Top-level performance test suite
 
 import Testing

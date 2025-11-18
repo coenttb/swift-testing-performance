@@ -74,19 +74,19 @@ extension Threshold {
     /// Get the threshold for the current platform
     public var current: Duration? {
         #if os(macOS)
-        return macOS
+            return macOS
         #elseif os(iOS)
-        return iOS
+            return iOS
         #elseif os(watchOS)
-        return watchOS
+            return watchOS
         #elseif os(tvOS)
-        return tvOS
+            return tvOS
         #elseif os(Linux)
-        return linux
+            return linux
         #elseif os(Windows)
-        return windows
+            return windows
         #else
-        return nil
+            return nil
         #endif
     }
 }

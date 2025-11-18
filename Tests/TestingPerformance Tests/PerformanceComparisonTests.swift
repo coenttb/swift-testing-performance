@@ -1,5 +1,5 @@
 // PerformanceComparisonTests.swift
-// TestingPerformance Tests
+// TestingPerformance
 //
 // PerformanceComparison tests
 

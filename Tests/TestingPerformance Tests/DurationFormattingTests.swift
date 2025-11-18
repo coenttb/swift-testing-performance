@@ -1,5 +1,5 @@
 // DurationFormattingTests.swift
-// TestingPerformance Tests
+// TestingPerformance
 //
 // Duration formatting tests
 

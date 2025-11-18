@@ -1,9 +1,9 @@
-// Codable Tests
-// TestingPerformance Tests
+// Codable Tests.swift
+// TestingPerformance
 
+import Foundation
 import Testing
 import TestingPerformance
-import Foundation
 
 extension PerformanceTests {
     @Test("Codable - encode and decode measurement")
