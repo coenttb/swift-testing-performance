@@ -131,6 +131,12 @@ Net allocations: 15
 Net bytes: 102.40 KB
 ```
 
+**Note**: Memory leak detection tracks net allocations during test execution. Background system allocations (runtime housekeeping, ARC cleanup) may occasionally trigger false positives. For reliable leak detection:
+- Use `.serialized` test execution to minimize interference
+- Test in controlled environments where possible
+- Focus on detecting significant leaks rather than zero allocations
+- Consider the operational environment when setting expectations
+
 ### Peak Memory Tracking
 
 Monitor and enforce peak memory budgets:
