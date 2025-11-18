@@ -66,18 +66,18 @@ extension TestingPerformance {
 
     #if os(Linux)
         private static func captureAllocationStatsLinux() -> TestingPerformance.AllocationStats {
-            // On Linux, we use mallinfo2 if available (glibc 2.33+)
+            // On Linux, we use mallinfo2 (glibc 2.33+) which replaced deprecated mallinfo
             // This is a simplified implementation
             // In production, might want to use jemalloc statistics or similar
             #if canImport(Glibc)
-                let info = mallinfo()
-                return Performance.AllocationStats(
-                    allocations: 0,  // mallinfo doesn't track count
+                let info = mallinfo2()
+                return TestingPerformance.AllocationStats(
+                    allocations: 0,  // mallinfo2 doesn't track count
                     deallocations: 0,
                     bytesAllocated: Int(info.uordblks)
                 )
             #else
-                return Performance.AllocationStats()
+                return TestingPerformance.AllocationStats()
             #endif
         }
     #endif
