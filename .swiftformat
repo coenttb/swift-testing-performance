@@ -31,9 +31,6 @@
 --elseposition same-line
 --guardelse same-line
 
-# Sorting
---sortimports alpha  # Alphabetically sorted imports
-
 # Enumerations
 --enumnamespaces always  # Use enums for namespaces (like TestingPerformance)
 
@@ -132,5 +129,4 @@
   yodaConditions
 
 # Exclude paths
---exclude .build,
-          .swiftpm
+--exclude .build
