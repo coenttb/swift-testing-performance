@@ -1,0 +1,219 @@
+// Statistics.swift
+// TestingPerformance
+//
+// Statistical significance testing
+
+#if canImport(Darwin)
+import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#endif
+
+@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
+extension TestingPerformance.Measurement {
+
+    /// Test if this measurement is significantly different from another
+    ///
+    /// Uses Welch's t-test to determine if the difference between two measurements
+    /// is statistically significant.
+    ///
+    /// - Parameters:
+    ///   - other: The measurement to compare against
+    ///   - confidenceLevel: The confidence level (default: 0.95 for 95% confidence)
+    /// - Returns: `true` if the measurements are significantly different
+    ///
+    /// Example:
+    /// ```swift
+    /// let before = TestingPerformance.measure { oldAlgorithm() }.measurement
+    /// let after = TestingPerformance.measure { newAlgorithm() }.measurement
+    ///
+    /// if after.isSignificantlyDifferent(from: before, confidenceLevel: 0.95) {
+    ///     print("Performance change is statistically significant")
+    /// }
+    /// ```
+    public func isSignificantlyDifferent(
+        from other: TestingPerformance.Measurement,
+        confidenceLevel: Double = 0.95
+    ) -> Bool {
+        // Welch's t-test for two samples with potentially different variances
+
+        guard !durations.isEmpty && !other.durations.isEmpty else {
+            return false
+        }
+
+        // Sample sizes
+        let n1 = Double(durations.count)
+        let n2 = Double(other.durations.count)
+
+        // Means
+        let mean1 = mean.inSeconds
+        let mean2 = other.mean.inSeconds
+
+        // Variances
+        let var1 = variance
+        let var2 = other.variance
+
+        // Welch's t-statistic
+        let numerator = mean1 - mean2
+        let denominator = sqrt((var1 / n1) + (var2 / n2))
+
+        guard denominator > 0 else {
+            // Special case: zero variance means all samples are identical
+            // If means differ and both have zero variance, difference is significant
+            return abs(mean1 - mean2) > 0
+        }
+
+        let tStatistic = abs(numerator / denominator)
+
+        // Welch-Satterthwaite degrees of freedom
+        let numeratorDF = pow((var1 / n1) + (var2 / n2), 2)
+        let denominatorDF = (pow(var1 / n1, 2) / (n1 - 1)) + (pow(var2 / n2, 2) / (n2 - 1))
+        let degreesOfFreedom = numeratorDF / denominatorDF
+
+        // Critical value for two-tailed test
+        let alpha = 1.0 - confidenceLevel
+        let criticalValue = tCritical(df: degreesOfFreedom, alpha: alpha / 2.0)
+
+        return tStatistic > criticalValue
+    }
+
+    /// Test if this measurement is significantly faster than another
+    ///
+    /// Uses one-tailed Welch's t-test.
+    ///
+    /// - Parameters:
+    ///   - other: The measurement to compare against
+    ///   - confidenceLevel: The confidence level (default: 0.95)
+    /// - Returns: `true` if this measurement is significantly faster
+    public func isSignificantlyFaster(
+        than other: TestingPerformance.Measurement,
+        confidenceLevel: Double = 0.95
+    ) -> Bool {
+        guard !durations.isEmpty && !other.durations.isEmpty else {
+            return false
+        }
+
+        let n1 = Double(durations.count)
+        let n2 = Double(other.durations.count)
+
+        let mean1 = mean.inSeconds
+        let mean2 = other.mean.inSeconds
+
+        // Check direction: we want mean1 < mean2 (faster)
+        guard mean1 < mean2 else {
+            return false
+        }
+
+        let var1 = variance
+        let var2 = other.variance
+
+        let numerator = mean1 - mean2
+        let denominator = sqrt((var1 / n1) + (var2 / n2))
+
+        guard denominator > 0 else {
+            // Special case: zero variance means all samples are identical
+            // If means differ and both have zero variance, difference is significant
+            return abs(mean1 - mean2) > 0
+        }
+
+        let tStatistic = numerator / denominator  // Negative because mean1 < mean2
+
+        let numeratorDF = pow((var1 / n1) + (var2 / n2), 2)
+        let denominatorDF = (pow(var1 / n1, 2) / (n1 - 1)) + (pow(var2 / n2, 2) / (n2 - 1))
+        let degreesOfFreedom = numeratorDF / denominatorDF
+
+        let alpha = 1.0 - confidenceLevel
+        let criticalValue = -tCritical(df: degreesOfFreedom, alpha: alpha)
+
+        return tStatistic < criticalValue
+    }
+
+    /// Test if this measurement is significantly slower than another
+    ///
+    /// Uses one-tailed Welch's t-test.
+    ///
+    /// - Parameters:
+    ///   - other: The measurement to compare against
+    ///   - confidenceLevel: The confidence level (default: 0.95)
+    /// - Returns: `true` if this measurement is significantly slower
+    public func isSignificantlySlower(
+        than other: TestingPerformance.Measurement,
+        confidenceLevel: Double = 0.95
+    ) -> Bool {
+        other.isSignificantlyFaster(than: self, confidenceLevel: confidenceLevel)
+    }
+
+    /// Variance of the sample
+    private var variance: Double {
+        guard durations.count > 1 else { return 0 }
+
+        let meanSeconds = mean.inSeconds
+        let sumSquaredDiff = durations.reduce(0.0) { acc, duration in
+            let diff = duration.inSeconds - meanSeconds
+            return acc + (diff * diff)
+        }
+
+        return sumSquaredDiff / Double(durations.count - 1)
+    }
+
+    /// Approximate t-distribution critical value
+    ///
+    /// Uses approximation for common confidence levels, falls back to normal distribution
+    /// for very large degrees of freedom.
+    private func tCritical(df: Double, alpha: Double) -> Double {
+        // For very large df (>100), t-distribution approaches normal distribution
+        if df > 100 {
+            // Z-scores for common alpha values (two-tailed)
+            if alpha <= 0.001 {
+                return 3.291  // 99.9% confidence
+            } else if alpha <= 0.01 {
+                return 2.576  // 99% confidence
+            } else if alpha <= 0.025 {
+                return 1.96   // 95% confidence
+            } else if alpha <= 0.05 {
+                return 1.645  // 90% confidence
+            } else {
+                return 1.282  // 80% confidence
+            }
+        }
+
+        // Approximation for smaller df using lookup table
+        // Common values for two-tailed 95% confidence (alpha = 0.025)
+        if alpha <= 0.03 && alpha >= 0.02 {
+            if df < 2 {
+                return 12.706
+            } else if df < 3 {
+                return 4.303
+            } else if df < 4 {
+                return 3.182
+            } else if df < 5 {
+                return 2.776
+            } else if df < 6 {
+                return 2.571
+            } else if df < 7 {
+                return 2.447
+            } else if df < 8 {
+                return 2.365
+            } else if df < 9 {
+                return 2.306
+            } else if df < 10 {
+                return 2.262
+            } else if df < 15 {
+                return 2.145
+            } else if df < 20 {
+                return 2.093
+            } else if df < 30 {
+                return 2.042
+            } else if df < 40 {
+                return 2.021
+            } else if df < 60 {
+                return 2.000
+            } else {
+                return 1.980
+            }
+        }
+
+        // Fallback: use normal approximation
+        return 1.96
+    }
+}
