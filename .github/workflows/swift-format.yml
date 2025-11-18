@@ -29,12 +29,14 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: /usr/local/bin/swift-format
-          key: ${{ runner.os }}-swift-format-main-v1
+          key: ${{ runner.os }}-swift-format-602.0.0-v1
 
       - name: Install swift-format
         if: steps.cache-swift-format-restore.outputs.cache-hit != 'true'
         run: |
-          git clone --depth 1 --branch main https://github.com/apple/swift-format.git
+          # Build from stable release tag instead of main
+          # Update version: https://github.com/apple/swift-format/releases
+          git clone --depth 1 --branch 602.0.0 https://github.com/apple/swift-format.git
           cd swift-format
           swift build -c release
           cp .build/release/swift-format /usr/local/bin/
@@ -54,4 +56,4 @@ jobs:
         if: steps.cache-swift-format-restore.outputs.cache-hit != 'true'
         with:
           path: /usr/local/bin/swift-format
-          key: ${{ runner.os }}-swift-format-main-v1
+          key: ${{ runner.os }}-swift-format-602.0.0-v1
