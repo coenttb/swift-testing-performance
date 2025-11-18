@@ -79,13 +79,13 @@
 
                 for _ in 0..<config.iterations {
                     // Use AllocationTracker.measure() for cleaner allocation tracking
-                    let (_, duration, stats) = try await measureWithAllocations(function)
+                    let result = try await measureWithAllocations(function)
 
-                    durations.append(duration)
+                    durations.append(result.duration)
 
                     // Track allocation delta if monitoring allocations
                     if config.maxAllocations != nil {
-                        allocationDeltas.append(stats.bytesAllocated)
+                        allocationDeltas.append(result.stats.bytesAllocated)
                     }
 
                     // Sample peak memory if tracking
@@ -94,75 +94,129 @@
 
                 let measurement = TestingPerformance.Measurement(durations: durations)
 
+                // Print and validate results
+                let context = ValidationContext(
+                    measurement: measurement,
+                    allocationDeltas: allocationDeltas,
+                    leakDetector: leakDetector,
+                    peakTracker: peakTracker
+                )
+                try reportAndValidateResults(name: name, config: config, context: context)
+            }
+
+            private struct ValidationContext {
+                let measurement: TestingPerformance.Measurement
+                let allocationDeltas: [Int]
+                let leakDetector: MemoryAllocation.LeakDetector?
+                let peakTracker: MemoryAllocation.PeakMemoryTracker?
+            }
+
+            private func reportAndValidateResults(
+                name: String,
+                config: TestingPerformance.Configuration,
+                context: ValidationContext
+            ) throws {
                 // Print if requested
                 if config.printResults {
-                    let peakBytes = peakTracker?.peakBytes
+                    let peakBytes = context.peakTracker?.peakBytes
                     TestingPerformance.printPerformance(
                         name,
-                        measurement,
-                        allocations: allocationDeltas.isEmpty ? nil : allocationDeltas,
+                        context.measurement,
+                        allocations: context.allocationDeltas.isEmpty ? nil : context.allocationDeltas,
                         peakMemory: peakBytes
                     )
                 }
 
-                // Check threshold if set
-                if let threshold = config.threshold {
-                    let metric = config.metric.extract(from: measurement)
-                    guard metric <= threshold else {
-                        throw TestingPerformance.Error.thresholdExceeded(
-                            test: name,
-                            metric: config.metric,
-                            expected: threshold,
-                            actual: metric
-                        )
-                    }
-                }
+                // Validate performance threshold
+                try validatePerformanceThreshold(name: name, config: config, measurement: context.measurement)
 
-                // Check allocation limit if set
-                if let maxAllocations = config.maxAllocations, !allocationDeltas.isEmpty {
-                    let maxAllocationBytes = allocationDeltas.max() ?? 0
-                    guard maxAllocationBytes <= maxAllocations else {
-                        throw TestingPerformance.Error.allocationLimitExceeded(
-                            test: name,
-                            limit: maxAllocations,
-                            actual: maxAllocationBytes
-                        )
-                    }
-                }
+                // Validate allocation limit
+                try validateAllocationLimit(name: name, config: config, allocationDeltas: context.allocationDeltas)
 
-                // Check for memory leaks if requested
-                if let detector = leakDetector {
-                    if detector.hasLeaks() {
-                        throw TestingPerformance.Error.memoryLeakDetected(
-                            test: name,
-                            netAllocations: detector.netAllocations,
-                            netBytes: detector.netBytes
-                        )
-                    }
-                }
+                // Validate no memory leaks
+                try validateNoMemoryLeaks(name: name, detector: context.leakDetector)
 
-                // Check peak memory limit if set
-                if let limit = config.peakMemoryLimit, let tracker = peakTracker {
-                    guard tracker.peakBytes <= limit else {
-                        throw TestingPerformance.Error.peakMemoryExceeded(
-                            test: name,
-                            limit: limit,
-                            actual: tracker.peakBytes
-                        )
-                    }
+                // Validate peak memory limit
+                try validatePeakMemoryLimit(name: name, config: config, tracker: context.peakTracker)
+            }
+
+            private func validatePerformanceThreshold(
+                name: String,
+                config: TestingPerformance.Configuration,
+                measurement: TestingPerformance.Measurement
+            ) throws {
+                guard let threshold = config.threshold else { return }
+                let metric = config.metric.extract(from: measurement)
+                guard metric <= threshold else {
+                    throw TestingPerformance.Error.thresholdExceeded(
+                        test: name,
+                        metric: config.metric,
+                        expected: threshold,
+                        actual: metric
+                    )
+                }
+            }
+
+            private func validateAllocationLimit(
+                name: String,
+                config: TestingPerformance.Configuration,
+                allocationDeltas: [Int]
+            ) throws {
+                guard let maxAllocations = config.maxAllocations, !allocationDeltas.isEmpty else { return }
+                let maxAllocationBytes = allocationDeltas.max() ?? 0
+                guard maxAllocationBytes <= maxAllocations else {
+                    throw TestingPerformance.Error.allocationLimitExceeded(
+                        test: name,
+                        limit: maxAllocations,
+                        actual: maxAllocationBytes
+                    )
+                }
+            }
+
+            private func validateNoMemoryLeaks(
+                name: String,
+                detector: MemoryAllocation.LeakDetector?
+            ) throws {
+                guard let detector = detector else { return }
+                if detector.hasLeaks() {
+                    throw TestingPerformance.Error.memoryLeakDetected(
+                        test: name,
+                        netAllocations: detector.netAllocations,
+                        netBytes: detector.netBytes
+                    )
+                }
+            }
+
+            private func validatePeakMemoryLimit(
+                name: String,
+                config: TestingPerformance.Configuration,
+                tracker: MemoryAllocation.PeakMemoryTracker?
+            ) throws {
+                guard let limit = config.peakMemoryLimit, let tracker = tracker else { return }
+                guard tracker.peakBytes <= limit else {
+                    throw TestingPerformance.Error.peakMemoryExceeded(
+                        test: name,
+                        limit: limit,
+                        actual: tracker.peakBytes
+                    )
                 }
             }
 
             // Helper to measure both duration and allocations using AllocationTracker
             private func measureWithAllocations(
                 _ function: @Sendable () async throws -> Void
-            ) async throws -> (Void, Duration, MemoryAllocation.AllocationStats) {
+            ) async throws -> MeasurementResult {
                 let start = ContinuousClock.now
                 let (_, stats) = try await MemoryAllocation.AllocationTracker.measure {
                     try await function()
                 }
                 let duration = ContinuousClock.now - start
-                return ((), duration, stats)
+                return MeasurementResult(duration: duration, stats: stats)
+            }
+
+            private struct MeasurementResult {
+                let duration: Duration
+                let stats: MemoryAllocation.AllocationStats
             }
         }
 

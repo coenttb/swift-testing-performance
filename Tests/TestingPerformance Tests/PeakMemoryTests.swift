@@ -21,7 +21,7 @@ struct PeakMemoryTests {
         // Verify API works
         #expect(tracker.peakBytes >= 0)
         #expect(tracker.peakAllocations >= 0)
-        #expect(tracker.samples.count >= 0)
+        #expect(!tracker.samples.isEmpty)
     }
 
     @Test("Track peak memory with limit")

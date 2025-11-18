@@ -124,7 +124,7 @@ struct ReadmeVerificationTests {
             oneTimeOperation()
         }
 
-        #expect(quickResult.count > 0)
+        #expect(!quickResult.isEmpty)
         #expect(duration > .zero)
     }
 
