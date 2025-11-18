@@ -76,12 +76,12 @@ jobs:
       - name: Test (release)
         run: swift test -c release
 
-  # Compatibility check: Minimum supported Swift version (6.0)
-  # Note: Swift Testing framework requires Swift 6.0+
+  # Compatibility check: Minimum supported Swift version (6.1)
+  # Note: TestScoping protocol requires Swift 6.1+
   linux-compat:
-    name: Ubuntu (Swift 6.0, compatibility)
+    name: Ubuntu (Swift 6.1, compatibility)
     runs-on: ubuntu-latest
-    container: swift:6.0
+    container: swift:6.1
     steps:
       - uses: actions/checkout@v5
 
@@ -89,9 +89,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .build
-          key: linux-swift60-spm-${{ hashFiles('Package.swift', 'Package@*.swift') }}
-          restore-keys: linux-swift60-spm-
+          key: linux-swift61-spm-${{ hashFiles('Package.swift', 'Package@*.swift') }}
+          restore-keys: linux-swift61-spm-
 
       # Note: swift test builds automatically
-      - name: Test (Swift 6.0)
+      - name: Test (Swift 6.1)
         run: swift test -c release
