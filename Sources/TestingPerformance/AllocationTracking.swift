@@ -4,9 +4,9 @@
 // Memory allocation tracking for performance tests
 
 #if canImport(Darwin)
-import Darwin
+    import Darwin
 #elseif canImport(Glibc)
-import Glibc
+    import Glibc
 #endif
 
 extension TestingPerformance {
@@ -42,43 +42,43 @@ extension TestingPerformance {
     /// Platform-specific implementation that tracks memory allocations.
     /// Returns zero stats if allocation tracking is unavailable.
     static func captureAllocationStats() -> TestingPerformance.AllocationStats {
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-        return captureAllocationStatsDarwin()
-#elseif os(Linux)
-        return captureAllocationStatsLinux()
-#else
-        return Performance.AllocationStats()
-#endif
+        #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+            return captureAllocationStatsDarwin()
+        #elseif os(Linux)
+            return captureAllocationStatsLinux()
+        #else
+            return Performance.AllocationStats()
+        #endif
     }
 
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
-    private static func captureAllocationStatsDarwin() -> TestingPerformance.AllocationStats {
-        var stats = malloc_statistics_t()
-        malloc_zone_statistics(nil, &stats)
+    #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+        private static func captureAllocationStatsDarwin() -> TestingPerformance.AllocationStats {
+            var stats = malloc_statistics_t()
+            malloc_zone_statistics(nil, &stats)
 
-        return TestingPerformance.AllocationStats(
-            allocations: Int(stats.blocks_in_use),
-            deallocations: 0,  // Not directly available from malloc_statistics_t
-            bytesAllocated: Int(stats.size_in_use)
-        )
-    }
-#endif
+            return TestingPerformance.AllocationStats(
+                allocations: Int(stats.blocks_in_use),
+                deallocations: 0,  // Not directly available from malloc_statistics_t
+                bytesAllocated: Int(stats.size_in_use)
+            )
+        }
+    #endif
 
-#if os(Linux)
-    private static func captureAllocationStatsLinux() -> TestingPerformance.AllocationStats {
-        // On Linux, we use mallinfo2 if available (glibc 2.33+)
-        // This is a simplified implementation
-        // In production, might want to use jemalloc statistics or similar
-#if canImport(Glibc)
-        let info = mallinfo()
-        return Performance.AllocationStats(
-            allocations: 0,  // mallinfo doesn't track count
-            deallocations: 0,
-            bytesAllocated: Int(info.uordblks)
-        )
-#else
-        return Performance.AllocationStats()
-#endif
-    }
-#endif
+    #if os(Linux)
+        private static func captureAllocationStatsLinux() -> TestingPerformance.AllocationStats {
+            // On Linux, we use mallinfo2 if available (glibc 2.33+)
+            // This is a simplified implementation
+            // In production, might want to use jemalloc statistics or similar
+            #if canImport(Glibc)
+                let info = mallinfo()
+                return Performance.AllocationStats(
+                    allocations: 0,  // mallinfo doesn't track count
+                    deallocations: 0,
+                    bytesAllocated: Int(info.uordblks)
+                )
+            #else
+                return Performance.AllocationStats()
+            #endif
+        }
+    #endif
 }

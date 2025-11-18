@@ -4,9 +4,9 @@
 // Statistical significance testing
 
 #if canImport(Darwin)
-import Darwin
+    import Darwin
 #elseif canImport(Glibc)
-import Glibc
+    import Glibc
 #endif
 
 @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
@@ -180,10 +180,10 @@ extension TestingPerformance.Measurement {
     private static func zScore(alpha: Double) -> Double {
         switch alpha {
         case ...0.001: return 3.291  // 99.9% confidence
-        case ...0.01: return 2.576   // 99% confidence
-        case ...0.025: return 1.96   // 95% confidence
-        case ...0.05: return 1.645   // 90% confidence
-        default: return 1.282        // 80% confidence
+        case ...0.01: return 2.576  // 99% confidence
+        case ...0.025: return 1.96  // 95% confidence
+        case ...0.05: return 1.645  // 90% confidence
+        default: return 1.282  // 80% confidence
         }
     }
 

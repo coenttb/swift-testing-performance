@@ -4,9 +4,9 @@
 // Performance test reporting and formatting
 
 #if canImport(Darwin)
-import Darwin
+    import Darwin
 #elseif canImport(Glibc)
-import Glibc
+    import Glibc
 #endif
 
 @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
@@ -42,12 +42,12 @@ extension TestingPerformance {
 
             output += """
 
-               Allocations:
-                 Min:      \(formatBytes(minAlloc))
-                 Median:   \(formatBytes(allocations.sorted()[allocations.count / 2]))
-                 Max:      \(formatBytes(maxAlloc))
-                 Avg:      \(formatBytes(avgAlloc))
-            """
+                   Allocations:
+                     Min:      \(formatBytes(minAlloc))
+                     Median:   \(formatBytes(allocations.sorted()[allocations.count / 2]))
+                     Max:      \(formatBytes(maxAlloc))
+                     Avg:      \(formatBytes(avgAlloc))
+                """
         }
 
         print(output)
@@ -104,15 +104,15 @@ extension TestingPerformance {
         /// Check if terminal supports ANSI colors
         static var isSupported: Bool {
             #if os(Linux) || os(macOS)
-            // Check TERM environment variable using C getenv
-            guard let termPtr = getenv("TERM") else {
-                return false
-            }
-            let term = String(cString: termPtr)
-            // Most modern terminals support colors
-            return term != "dumb" && !term.isEmpty
+                // Check TERM environment variable using C getenv
+                guard let termPtr = getenv("TERM") else {
+                    return false
+                }
+                let term = String(cString: termPtr)
+                // Most modern terminals support colors
+                return term != "dumb" && !term.isEmpty
             #else
-            return false
+                return false
             #endif
         }
 
@@ -131,7 +131,8 @@ extension TestingPerformance {
         let leftPad = padding / 2
         let rightPad = padding - leftPad
 
-        return String(repeating: " ", count: leftPad) + text + String(repeating: " ", count: rightPad)
+        return String(repeating: " ", count: leftPad) + text
+            + String(repeating: " ", count: rightPad)
     }
 }
 
@@ -181,12 +182,14 @@ public struct PerformanceComparison: Sendable {
         let changeEmoji = isRegression ? "🔴" : "🟢"
 
         // Apply ANSI color if supported
-        let nameColored = isRegression
+        let nameColored =
+            isRegression
             ? TestingPerformance.ANSIColor.colored(name, color: .red)
             : TestingPerformance.ANSIColor.colored(name, color: .green)
 
         let changeText = "\(changeSymbol) \(formatPercent(changePercent))%"
-        let changeColored = isRegression
+        let changeColored =
+            isRegression
             ? TestingPerformance.ANSIColor.colored(changeText, color: .red)
             : TestingPerformance.ANSIColor.colored(changeText, color: .green)
 
@@ -236,7 +239,8 @@ extension TestingPerformance {
         let neutral = comparisons.count - regressions - improvements
 
         // Make summary more prominent
-        let summaryText = "Summary: \(improvements) improvements, \(neutral) neutral, \(regressions) regressions"
+        let summaryText =
+            "Summary: \(improvements) improvements, \(neutral) neutral, \(regressions) regressions"
         let summaryColored = ANSIColor.colored(summaryText, color: .bold)
         print(summaryColored)
         print("╚══════════════════════════════════════════════════════════╝\n")
@@ -288,7 +292,11 @@ public struct PerformanceSuite {
         iterations: Int = 10,
         operation: () -> T
     ) -> T {
-        let (result, measurement) = TestingPerformance.measure(warmup: warmup, iterations: iterations, operation: operation)
+        let (result, measurement) = TestingPerformance.measure(
+            warmup: warmup,
+            iterations: iterations,
+            operation: operation
+        )
         benchmarks.append((name, measurement))
         return result
     }
@@ -307,7 +315,11 @@ public struct PerformanceSuite {
         iterations: Int = 10,
         operation: () async throws -> T
     ) async rethrows -> T {
-        let (result, measurement) = try await TestingPerformance.measure(warmup: warmup, iterations: iterations, operation: operation)
+        let (result, measurement) = try await TestingPerformance.measure(
+            warmup: warmup,
+            iterations: iterations,
+            operation: operation
+        )
         benchmarks.append((name, measurement))
         return result
     }

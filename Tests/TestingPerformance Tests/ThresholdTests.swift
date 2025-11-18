@@ -62,9 +62,9 @@ extension PerformanceTests {
         let threshold = Threshold(macOS: .milliseconds(100))
 
         #if os(macOS)
-        #expect(threshold.current == .milliseconds(100))
+            #expect(threshold.current == .milliseconds(100))
         #else
-        #expect(threshold.current == nil)
+            #expect(threshold.current == nil)
         #endif
     }
 

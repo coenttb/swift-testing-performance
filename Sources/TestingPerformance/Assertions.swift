@@ -4,9 +4,9 @@
 // Performance threshold assertions for Swift Testing
 
 #if canImport(Darwin)
-import Darwin
+    import Darwin
 #elseif canImport(Glibc)
-import Glibc
+    import Glibc
 #endif
 
 @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
@@ -27,7 +27,11 @@ extension TestingPerformance {
         metric: TestingPerformance.Metric = .median,
         operation: () -> T
     ) throws -> (result: T, measurement: TestingPerformance.Measurement) {
-        let (result, measurement) = measure(warmup: warmup, iterations: iterations, operation: operation)
+        let (result, measurement) = measure(
+            warmup: warmup,
+            iterations: iterations,
+            operation: operation
+        )
 
         let actualDuration = metric.extract(from: measurement)
 
@@ -51,7 +55,11 @@ extension TestingPerformance {
         metric: TestingPerformance.Metric = .median,
         operation: () async throws -> T
     ) async throws -> (result: T, measurement: TestingPerformance.Measurement) {
-        let (result, measurement) = try await measure(warmup: warmup, iterations: iterations, operation: operation)
+        let (result, measurement) = try await measure(
+            warmup: warmup,
+            iterations: iterations,
+            operation: operation
+        )
 
         let actualDuration = metric.extract(from: measurement)
 
@@ -117,7 +125,8 @@ extension TestingPerformance {
         let currentValue = metric.extract(from: current)
         let baselineValue = metric.extract(from: baseline)
 
-        let regression = (currentValue.inSeconds - baselineValue.inSeconds) / baselineValue.inSeconds
+        let regression =
+            (currentValue.inSeconds - baselineValue.inSeconds) / baselineValue.inSeconds
 
         guard regression <= tolerance else {
             throw TestingPerformance.Error.regressionDetected(

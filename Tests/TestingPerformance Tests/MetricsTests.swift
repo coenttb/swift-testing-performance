@@ -18,7 +18,7 @@ extension PerformanceTests {
                     .milliseconds(10),
                     .milliseconds(15),
                     .milliseconds(20),
-                    .milliseconds(25)
+                    .milliseconds(25),
                 ]
             )
 
@@ -34,7 +34,7 @@ extension PerformanceTests {
                     .milliseconds(20),
                     .milliseconds(30),
                     .milliseconds(40),
-                    .milliseconds(50)
+                    .milliseconds(50),
                 ]
             )
 
@@ -48,13 +48,14 @@ extension PerformanceTests {
                 durations: [
                     .milliseconds(10),
                     .milliseconds(20),
-                    .milliseconds(30)
+                    .milliseconds(30),
                 ]
             )
 
             // Mean = (10 + 20 + 30) / 3 = 20
-            let meanMs = measurement.mean.components.seconds * 1000 +
-                         measurement.mean.components.attoseconds / 1_000_000_000_000_000
+            let meanMs =
+                measurement.mean.components.seconds * 1000 + measurement.mean.components.attoseconds
+                / 1_000_000_000_000_000
             #expect(meanMs == 20)
         }
 
@@ -78,13 +79,15 @@ extension PerformanceTests {
                 durations: [
                     .milliseconds(10),
                     .milliseconds(20),
-                    .milliseconds(30)
+                    .milliseconds(30),
                 ]
             )
 
             #expect(TestingPerformance.Metric.min.extract(from: measurement) == measurement.min)
             #expect(TestingPerformance.Metric.max.extract(from: measurement) == measurement.max)
-            #expect(TestingPerformance.Metric.median.extract(from: measurement) == measurement.median)
+            #expect(
+                TestingPerformance.Metric.median.extract(from: measurement) == measurement.median
+            )
             #expect(TestingPerformance.Metric.mean.extract(from: measurement) == measurement.mean)
             #expect(TestingPerformance.Metric.p95.extract(from: measurement) == measurement.p95)
             #expect(TestingPerformance.Metric.p99.extract(from: measurement) == measurement.p99)
@@ -96,7 +99,7 @@ extension PerformanceTests {
                 durations: [
                     .milliseconds(10),
                     .milliseconds(20),
-                    .milliseconds(30)
+                    .milliseconds(30),
                 ]
             )
 

@@ -4,9 +4,9 @@
 // Performance measurement primitives for Swift Testing
 
 #if canImport(Darwin)
-import Darwin
+    import Darwin
 #elseif canImport(Glibc)
-import Glibc
+    import Glibc
 #endif
 
 extension TestingPerformance {
@@ -115,12 +115,18 @@ extension TestingPerformance {
 @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 extension TestingPerformance.Measurement: Comparable {
     /// Compares measurements by median duration
-    public static func < (lhs: TestingPerformance.Measurement, rhs: TestingPerformance.Measurement) -> Bool {
+    public static func < (
+        lhs: TestingPerformance.Measurement,
+        rhs: TestingPerformance.Measurement
+    ) -> Bool {
         lhs.median < rhs.median
     }
 
     /// Compares measurements by median duration
-    public static func == (lhs: TestingPerformance.Measurement, rhs: TestingPerformance.Measurement) -> Bool {
+    public static func == (
+        lhs: TestingPerformance.Measurement,
+        rhs: TestingPerformance.Measurement
+    ) -> Bool {
         lhs.median == rhs.median
     }
 }
@@ -241,10 +247,11 @@ extension TestingPerformance.Measurement {
     public var standardDeviation: Duration {
         guard durations.count > 1 else { return .zero }
         let meanSeconds = mean.inSeconds
-        let variance = durations.reduce(0.0) { acc, duration in
-            let diff = duration.inSeconds - meanSeconds
-            return acc + (diff * diff)
-        } / Double(durations.count - 1)
+        let variance =
+            durations.reduce(0.0) { acc, duration in
+                let diff = duration.inSeconds - meanSeconds
+                return acc + (diff * diff)
+            } / Double(durations.count - 1)
         return .seconds(sqrt(variance))
     }
 }
@@ -341,7 +348,9 @@ extension TestingPerformance {
 
     /// Single-shot timing measurement for async operations
     @discardableResult
-    public static func time<T>(operation: () async throws -> T) async rethrows -> (result: T, duration: Duration) {
+    public static func time<T>(
+        operation: () async throws -> T
+    ) async rethrows -> (result: T, duration: Duration) {
         let start = ContinuousClock.now
         let result = try await operation()
         let end = ContinuousClock.now
@@ -422,7 +431,10 @@ extension TestingPerformance {
     /// let formatted = TestingPerformance.formatDuration(.milliseconds(5.82))
     /// // "5.82ms"
     /// ```
-    public static func formatDuration(_ duration: Duration, _ format: TestingPerformance.Format = .auto) -> String {
+    public static func formatDuration(
+        _ duration: Duration,
+        _ format: TestingPerformance.Format = .auto
+    ) -> String {
         format.format(duration)
     }
 }

@@ -4,9 +4,9 @@
 // Main namespace and core types
 
 #if canImport(Darwin)
-import Darwin
+    import Darwin
 #elseif canImport(Glibc)
-import Glibc
+    import Glibc
 #endif
 
 /// Namespace for performance testing utilities integrated with Swift Testing.
@@ -160,7 +160,13 @@ extension TestingPerformance {
         ///   - current: The current (measured) duration
         ///   - regression: The regression as a fraction (e.g., 0.15 = 15% slower)
         ///   - tolerance: The maximum allowed regression fraction
-        case regressionDetected(metric: Metric, baseline: Duration, current: Duration, regression: Double, tolerance: Double)
+        case regressionDetected(
+            metric: Metric,
+            baseline: Duration,
+            current: Duration,
+            regression: Double,
+            tolerance: Double
+        )
 
         public var description: String {
             switch self {
@@ -187,7 +193,13 @@ extension TestingPerformance {
                     Exceeded by: \(TestingPerformance.formatDuration(actual - threshold))
                     """
 
-            case .regressionDetected(let metric, let baseline, let current, let regression, let tolerance):
+            case .regressionDetected(
+                let metric,
+                let baseline,
+                let current,
+                let regression,
+                let tolerance
+            ):
                 return """
                     Performance regression detected:
                     Baseline \(metric): \(TestingPerformance.formatDuration(baseline))
