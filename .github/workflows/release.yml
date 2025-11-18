@@ -39,6 +39,21 @@ jobs:
       - name: Run all tests
         run: swift test -c release
 
+      - name: Check for API breaking changes
+        id: api-diff
+        run: |
+          echo "## API Breaking Changes" > api-changes.md
+          if swift package diagnose-api-breaking-changes --breakage-allowlist-path .swift-api-breakage-allowlist 2>&1 | tee api-diff.txt; then
+            echo "✅ No API breaking changes detected" >> api-changes.md
+          else
+            echo "⚠️ **Breaking changes detected:**" >> api-changes.md
+            echo '```' >> api-changes.md
+            cat api-diff.txt >> api-changes.md
+            echo '```' >> api-changes.md
+            echo "::warning::API breaking changes detected in this release"
+          fi
+        continue-on-error: true
+
   create-release-artifacts:
     name: Create Release Artifacts
     needs: validate
@@ -49,24 +64,7 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.0.app
 
-      - name: Build library archives
-        run: |
-          # Build for arm64
-          swift build -c release --arch arm64
-
-          # Build for x86_64
-          swift build -c release --arch x86_64
-
-          # Create archives of the built libraries
-          cd .build
-          tar -czf swift-testing-performance-macos.tar.gz \
-            arm64-apple-macosx/release/*.swiftmodule \
-            x86_64-apple-macosx/release/*.swiftmodule \
-            2>/dev/null || true
-
-          echo "✅ Created library archives"
-
-      - name: Generate documentation
+      - name: Generate documentation archive
         run: |
           swift package \
             --allow-writing-to-directory ./docs \
@@ -76,32 +74,16 @@ jobs:
             --transform-for-static-hosting \
             --hosting-base-path swift-testing-performance
 
-          cat > ./docs/index.html << 'EOF'
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="utf-8">
-              <title>Redirecting to swift-testing-performance documentation</title>
-              <meta http-equiv="refresh" content="0; url=./documentation/testingperformance/">
-              <link rel="canonical" href="./documentation/testingperformance/">
-            </head>
-            <body>
-              <p>Redirecting to <a href="./documentation/testingperformance/">swift-testing-performance documentation</a>...</p>
-            </body>
-          </html>
-          EOF
-
-          # Create documentation archive
+          # Create documentation archive for download
           zip -r documentation.zip docs/
+          echo "✅ Created documentation archive"
         continue-on-error: true
 
-      - name: Upload artifacts to release
+      - name: Upload documentation to release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            .build/swift-testing-performance-macos.tar.gz
-            documentation.zip
+          files: documentation.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

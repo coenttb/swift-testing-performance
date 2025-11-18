@@ -31,9 +31,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .build
-          key: ${{ runner.os }}-spm-${{ hashFiles('Package.swift') }}
+          key: macos-swift62-spm-${{ hashFiles('Package.swift', 'Package@*.swift') }}
           restore-keys: |
-            ${{ runner.os }}-spm-
+            macos-swift62-spm-
 
       # Note: swift test builds automatically, no separate build step needed
       - name: Test
@@ -43,9 +43,18 @@ jobs:
         run: swift package dump-package
 
       - name: Check for API breaking changes
+        id: api-diff
         run: |
-          swift package diagnose-api-breaking-changes \
-            --breakage-allowlist-path .swift-api-breakage-allowlist || true
+          echo "## API Breaking Changes Check" >> $GITHUB_STEP_SUMMARY
+          if swift package diagnose-api-breaking-changes --breakage-allowlist-path .swift-api-breakage-allowlist 2>&1 | tee api-diff.txt; then
+            echo "✅ No API breaking changes detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ API breaking changes detected:" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat api-diff.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "::warning::API breaking changes detected. Review changes before release."
+          fi
         continue-on-error: true
 
   # Production validation: Latest Swift on Linux with release build
@@ -60,8 +69,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .build
-          key: ${{ runner.os }}-spm-${{ hashFiles('Package.swift') }}
-          restore-keys: ${{ runner.os }}-spm-
+          key: linux-swift62-spm-${{ hashFiles('Package.swift', 'Package@*.swift') }}
+          restore-keys: linux-swift62-spm-
 
       # Note: swift test builds automatically in release mode
       - name: Test (release)
@@ -80,8 +89,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .build
-          key: ${{ runner.os }}-swift60-spm-${{ hashFiles('Package.swift') }}
-          restore-keys: ${{ runner.os }}-swift60-spm-
+          key: linux-swift60-spm-${{ hashFiles('Package.swift', 'Package@*.swift') }}
+          restore-keys: linux-swift60-spm-
 
       # Note: swift test builds automatically
       - name: Test (Swift 6.0)
