@@ -15,7 +15,7 @@ extension TestingPerformance {
     ///
     /// Example:
     /// ```swift
-    /// TestingPerformance.expectPerformance(lessThan: .milliseconds(100)) {
+    /// try TestingPerformance.expectPerformance(lessThan: .milliseconds(100)) {
     ///     numbers.sum()
     /// }
     /// ```
@@ -26,20 +26,19 @@ extension TestingPerformance {
         iterations: Int = 10,
         metric: TestingPerformance.Metric = .median,
         operation: () -> T
-    ) -> (result: T, measurement: TestingPerformance.Measurement) {
+    ) throws -> (result: T, measurement: TestingPerformance.Measurement) {
         let (result, measurement) = measure(warmup: warmup, iterations: iterations, operation: operation)
-        
+
         let actualDuration = metric.extract(from: measurement)
-        
+
         guard actualDuration <= threshold else {
-            fatalError("""
-                Performance expectation failed:
-                Expected \(metric) < \(formatDuration(threshold))
-                Actual: \(formatDuration(actualDuration))
-                Exceeded by: \(formatDuration(actualDuration - threshold))
-                """)
+            throw TestingPerformance.Error.performanceExpectationFailed(
+                metric: metric,
+                threshold: threshold,
+                actual: actualDuration
+            )
         }
-        
+
         return (result, measurement)
     }
     
@@ -51,20 +50,19 @@ extension TestingPerformance {
         iterations: Int = 10,
         metric: TestingPerformance.Metric = .median,
         operation: () async throws -> T
-    ) async rethrows -> (result: T, measurement: TestingPerformance.Measurement) {
+    ) async throws -> (result: T, measurement: TestingPerformance.Measurement) {
         let (result, measurement) = try await measure(warmup: warmup, iterations: iterations, operation: operation)
-        
+
         let actualDuration = metric.extract(from: measurement)
-        
+
         guard actualDuration <= threshold else {
-            fatalError("""
-                Performance expectation failed:
-                Expected \(metric) < \(formatDuration(threshold))
-                Actual: \(formatDuration(actualDuration))
-                Exceeded by: \(formatDuration(actualDuration - threshold))
-                """)
+            throw TestingPerformance.Error.performanceExpectationFailed(
+                metric: metric,
+                threshold: threshold,
+                actual: actualDuration
+            )
         }
-        
+
         return (result, measurement)
     }
 }
@@ -115,20 +113,20 @@ extension TestingPerformance {
         baseline: TestingPerformance.Measurement,
         tolerance: Double = 0.10,
         metric: TestingPerformance.Metric = .median
-    ) {
+    ) throws {
         let currentValue = metric.extract(from: current)
         let baselineValue = metric.extract(from: baseline)
-        
+
         let regression = (currentValue.inSeconds - baselineValue.inSeconds) / baselineValue.inSeconds
-        
+
         guard regression <= tolerance else {
-            fatalError("""
-                Performance regression detected:
-                Baseline \(metric): \(formatDuration(baselineValue))
-                Current \(metric): \(formatDuration(currentValue))
-                Regression: \(formatPercent(regression * 100))%
-                Tolerance: \(formatPercent(tolerance * 100))%
-                """)
+            throw TestingPerformance.Error.regressionDetected(
+                metric: metric,
+                baseline: baselineValue,
+                current: currentValue,
+                regression: regression,
+                tolerance: tolerance
+            )
         }
     }
     

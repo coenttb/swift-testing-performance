@@ -159,63 +159,6 @@ extension TestingPerformance {
             )
         }
     }
-    
-    public enum Error: Swift.Error, CustomStringConvertible {
-        case thresholdExceeded(test: String, metric: Metric, expected: Duration, actual: Duration)
-        case allocationLimitExceeded(test: String, limit: Int, actual: Int)
-        
-        public var description: String {
-            switch self {
-            case .thresholdExceeded(let test, let metric, let expected, let actual):
-                return """
-                    Performance threshold exceeded in '\(test)':
-                    Expected \(metric): < \(TestingPerformance.formatDuration(expected))
-                    Actual \(metric): \(TestingPerformance.formatDuration(actual))
-                    """
-            case .allocationLimitExceeded(let test, let limit, let actual):
-                return """
-                    Memory allocation limit exceeded in '\(test)':
-                    Limit: \(formatBytes(limit))
-                    Actual: \(formatBytes(actual))
-                    Exceeded by: \(formatBytes(actual - limit))
-                    """
-            }
-        }
-        
-        private func formatBytes(_ bytes: Int) -> String {
-            if bytes == 0 {
-                return "0 bytes"
-            } else if bytes < 1024 {
-                return "\(bytes) bytes"
-            } else if bytes < 1024 * 1024 {
-                return formatNumber(Double(bytes) / 1024.0, decimals: 2) + " KB"
-            } else if bytes < 1024 * 1024 * 1024 {
-                return formatNumber(Double(bytes) / (1024.0 * 1024.0), decimals: 2) + " MB"
-            } else {
-                return formatNumber(Double(bytes) / (1024.0 * 1024.0 * 1024.0), decimals: 2) + " GB"
-            }
-        }
-        
-        private func formatNumber(_ value: Double, decimals: Int) -> String {
-            let multiplier = pow(10.0, Double(decimals))
-            let rounded = (value * multiplier).rounded() / multiplier
-            
-            let integerPart = Int(rounded)
-            let fractionalPart = rounded - Double(integerPart)
-            
-            if fractionalPart == 0 {
-                return "\(integerPart).\(String(repeating: "0", count: decimals))"
-            }
-            
-            let doubleFraction: Double = fractionalPart * multiplier
-            var fractionStr = "\(Int(doubleFraction.rounded()))"
-            while fractionStr.count < decimals {
-                fractionStr = "0" + fractionStr
-            }
-            
-            return "\(integerPart).\(fractionStr)"
-        }
-    }
 }
 
 // MARK: - Public API
