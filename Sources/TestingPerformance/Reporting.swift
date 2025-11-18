@@ -87,6 +87,54 @@ extension TestingPerformance {
     }
 }
 
+// MARK: - ANSI Color Support
+
+@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
+extension TestingPerformance {
+    /// ANSI color codes for terminal output
+    internal enum ANSIColor: String {
+        case reset = "\u{001B}[0m"
+        case red = "\u{001B}[31m"
+        case green = "\u{001B}[32m"
+        case yellow = "\u{001B}[33m"
+        case blue = "\u{001B}[34m"
+        case bold = "\u{001B}[1m"
+        case dim = "\u{001B}[2m"
+
+        /// Check if terminal supports ANSI colors
+        static var isSupported: Bool {
+            #if os(Linux) || os(macOS)
+            // Check TERM environment variable using C getenv
+            guard let termPtr = getenv("TERM") else {
+                return false
+            }
+            let term = String(cString: termPtr)
+            // Most modern terminals support colors
+            return term != "dumb" && !term.isEmpty
+            #else
+            return false
+            #endif
+        }
+
+        /// Wrap text in color if supported
+        static func colored(_ text: String, color: ANSIColor) -> String {
+            guard isSupported else { return text }
+            return color.rawValue + text + ANSIColor.reset.rawValue
+        }
+    }
+
+    /// Center text within a given width
+    internal static func centerText(_ text: String, width: Int) -> String {
+        let padding = width - text.count
+        guard padding > 0 else { return text }
+
+        let leftPad = padding / 2
+        let rightPad = padding - leftPad
+
+        return String(repeating: " ", count: leftPad) + text + String(repeating: " ", count: rightPad)
+    }
+}
+
 /// Performance comparison report
 @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 public struct PerformanceComparison: Sendable {
@@ -130,13 +178,23 @@ public struct PerformanceComparison: Sendable {
     public func formatted() -> String {
         let changePercent = abs(change) * 100
         let changeSymbol = isRegression ? "↑" : "↓"
-        let changeColor = isRegression ? "🔴" : "🟢"
-        
+        let changeEmoji = isRegression ? "🔴" : "🟢"
+
+        // Apply ANSI color if supported
+        let nameColored = isRegression
+            ? TestingPerformance.ANSIColor.colored(name, color: .red)
+            : TestingPerformance.ANSIColor.colored(name, color: .green)
+
+        let changeText = "\(changeSymbol) \(formatPercent(changePercent))%"
+        let changeColored = isRegression
+            ? TestingPerformance.ANSIColor.colored(changeText, color: .red)
+            : TestingPerformance.ANSIColor.colored(changeText, color: .green)
+
         return """
-            \(changeColor) \(name)
+            \(changeEmoji) \(nameColored)
                 Baseline: \(TestingPerformance.formatDuration(baselineValue))
                 Current:  \(TestingPerformance.formatDuration(currentValue))
-                Change:   \(changeSymbol) \(formatPercent(changePercent))%
+                Change:   \(changeColored)
             """
     }
     
@@ -160,20 +218,27 @@ public struct PerformanceComparison: Sendable {
 extension TestingPerformance {
     /// Print comparison report for multiple benchmarks
     public static func printComparisonReport(_ comparisons: [PerformanceComparison]) {
+        let boxWidth = 58  // Inner width of the box (excluding borders)
+        let title = "PERFORMANCE COMPARISON REPORT"
+        let centeredTitle = centerText(title, width: boxWidth)
+
         print("\n╔══════════════════════════════════════════════════════════╗")
-        print("║           PERFORMANCE COMPARISON REPORT                  ║")
+        print("║\(centeredTitle)║")
         print("╚══════════════════════════════════════════════════════════╝\n")
-        
+
         for comparison in comparisons {
             print(comparison.formatted())
             print("")
         }
-        
+
         let regressions = comparisons.filter { $0.isRegression }.count
         let improvements = comparisons.filter { $0.isImprovement }.count
         let neutral = comparisons.count - regressions - improvements
-        
-        print("Summary: \(improvements) improvements, \(neutral) neutral, \(regressions) regressions")
+
+        // Make summary more prominent
+        let summaryText = "Summary: \(improvements) improvements, \(neutral) neutral, \(regressions) regressions"
+        let summaryColored = ANSIColor.colored(summaryText, color: .bold)
+        print(summaryColored)
         print("╚══════════════════════════════════════════════════════════╝\n")
     }
 }
@@ -228,18 +293,21 @@ public struct PerformanceSuite {
     }
     
     public func printReport(metric: TestingPerformance.Metric = .median) {
+        let boxWidth = 58  // Inner width of the box (excluding borders)
+        let centeredTitle = TestingPerformance.centerText(name, width: boxWidth)
+
         print("\n╔══════════════════════════════════════════════════════════╗")
-        print("║  \(padRight(name, toLength: 56))║")
+        print("║\(centeredTitle)║")
         print("╚══════════════════════════════════════════════════════════╝\n")
-        
+
         let maxNameLength = benchmarks.map { $0.name.count }.max() ?? 0
-        
+
         for (name, measurement) in benchmarks {
             let value = metric.extract(from: measurement)
             let paddedName = padRight(name, toLength: maxNameLength)
             print("  \(paddedName)  \(TestingPerformance.formatDuration(value))")
         }
-        
+
         print("\n╚══════════════════════════════════════════════════════════╝\n")
     }
     
