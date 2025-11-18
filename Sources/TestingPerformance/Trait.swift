@@ -122,22 +122,35 @@
                     TestingPerformance.printPerformance(
                         name,
                         context.measurement,
-                        allocations: context.allocationDeltas.isEmpty ? nil : context.allocationDeltas,
+                        allocations: context.allocationDeltas.isEmpty
+                            ? nil : context.allocationDeltas,
                         peakMemory: peakBytes
                     )
                 }
 
                 // Validate performance threshold
-                try validatePerformanceThreshold(name: name, config: config, measurement: context.measurement)
+                try validatePerformanceThreshold(
+                    name: name,
+                    config: config,
+                    measurement: context.measurement
+                )
 
                 // Validate allocation limit
-                try validateAllocationLimit(name: name, config: config, allocationDeltas: context.allocationDeltas)
+                try validateAllocationLimit(
+                    name: name,
+                    config: config,
+                    allocationDeltas: context.allocationDeltas
+                )
 
                 // Validate no memory leaks
                 try validateNoMemoryLeaks(name: name, detector: context.leakDetector)
 
                 // Validate peak memory limit
-                try validatePeakMemoryLimit(name: name, config: config, tracker: context.peakTracker)
+                try validatePeakMemoryLimit(
+                    name: name,
+                    config: config,
+                    tracker: context.peakTracker
+                )
             }
 
             private func validatePerformanceThreshold(
@@ -162,7 +175,9 @@
                 config: TestingPerformance.Configuration,
                 allocationDeltas: [Int]
             ) throws {
-                guard let maxAllocations = config.maxAllocations, !allocationDeltas.isEmpty else { return }
+                guard let maxAllocations = config.maxAllocations, !allocationDeltas.isEmpty else {
+                    return
+                }
                 let maxAllocationBytes = allocationDeltas.max() ?? 0
                 guard maxAllocationBytes <= maxAllocations else {
                     throw TestingPerformance.Error.allocationLimitExceeded(
