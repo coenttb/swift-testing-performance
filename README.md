@@ -371,12 +371,6 @@ func `zero allocation test`() {
 
 Use both: swift-testing-performance for CI regression gates, Benchmark for detailed performance profiling.
 
-## Related Packages
-
-- [swift-html](https://github.com/coenttb/swift-html) - A Swift DSL for type-safe HTML
-- [swift-css](https://github.com/coenttb/swift-css) - A Swift DSL for type-safe CSS
-- [coenttb-html](https://github.com/coenttb/coenttb-html) - Extends swift-html with additional functionality and integrations
-
 ## License
 
 This project is licensed under the Apache 2.0 License. See [LICENSE](LICENSE) for details.
