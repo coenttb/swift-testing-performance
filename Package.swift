@@ -1,4 +1,4 @@
-// swift-tools-version: 6.1
+// swift-tools-version: 6.2
 
 import PackageDescription
 
@@ -12,7 +12,16 @@ let package = Package(
     ],
     targets: [
         .target(
+            name: "CAllocationTracking",
+            linkerSettings: [
+                .linkedLibrary("dl", .when(platforms: [.linux]))
+            ]
+        ),
+        .target(
             name: "TestingPerformance",
+            dependencies: [
+                .target(name: "CAllocationTracking", condition: .when(platforms: [.linux]))
+            ],
             swiftSettings: [
                 .enableUpcomingFeature("ExistentialAny"),
                 .enableExperimentalFeature("StrictConcurrency")

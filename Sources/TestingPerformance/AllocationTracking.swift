@@ -9,6 +9,10 @@
     import Glibc
 #endif
 
+#if os(Linux)
+    import CAllocationTracking
+#endif
+
 extension TestingPerformance {
     /// Memory allocation statistics
     public struct AllocationStats: Sendable {
@@ -66,18 +70,26 @@ extension TestingPerformance {
 
     #if os(Linux)
         private static func captureAllocationStatsLinux() -> TestingPerformance.AllocationStats {
-            // On Linux, mallinfo/mallinfo2 are not exposed through Swift's Glibc module
-            // For production use, consider using:
-            // - jemalloc statistics
-            // - tcmalloc heap profiling
-            // - Custom tracking via malloc hooks
-            // - /proc/self/status parsing
-            //
-            // For now, return stub data to allow tests to compile and run
+            let stats = tracking_current()
             return TestingPerformance.AllocationStats(
-                allocations: 0,
-                deallocations: 0,
-                bytesAllocated: 0
+                allocations: Int(stats.allocations),
+                deallocations: Int(stats.deallocations),
+                bytesAllocated: Int(stats.bytes_allocated)
+            )
+        }
+
+        // Enable allocation tracking on Linux
+        public static func startTracking() {
+            tracking_start()
+        }
+
+        // Disable allocation tracking on Linux
+        public static func stopTracking() -> TestingPerformance.AllocationStats {
+            let stats = tracking_stop()
+            return TestingPerformance.AllocationStats(
+                allocations: Int(stats.allocations),
+                deallocations: Int(stats.deallocations),
+                bytesAllocated: Int(stats.bytes_allocated)
             )
         }
     #endif
