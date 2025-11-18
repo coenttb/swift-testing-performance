@@ -17,7 +17,7 @@ extension TestingPerformance {
     ///
     /// ## Overview
     ///
-    /// Create measurements using ``TestingPerformance/measure(warmup:iterations:operation:)-5zs0y``:
+    /// Create measurements using ``TestingPerformance/measure(warmup:iterations:operation:)-4kv1g``:
     ///
     /// ```swift
     /// let (result, measurement) = TestingPerformance.measure(iterations: 100) {
@@ -38,7 +38,7 @@ extension TestingPerformance {
     ///
     /// ## Comparison
     ///
-    /// Measurements are ``Swift/Comparable`` by median value:
+    /// Measurements are `Comparable` by median value:
     ///
     /// ```swift
     /// if measurement1 < measurement2 {
@@ -83,7 +83,6 @@ extension TestingPerformance {
     /// ### Variability
     ///
     /// - ``standardDeviation``
-    /// - ``variance``
     @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
     public struct Measurement: Sendable, Codable {
         /// All measured durations from individual test iterations.

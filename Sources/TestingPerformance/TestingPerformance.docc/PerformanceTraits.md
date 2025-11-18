@@ -233,6 +233,6 @@ struct PerformanceTests {
 
 ## See Also
 
-- ``_PerformanceTrait``
-- ``Trait/timed(iterations:warmup:threshold:maxAllocations:metric:)``
 - ``TestingPerformance/Error``
+- ``TestingPerformance/Measurement``
+- ``TestingPerformance/Metric``

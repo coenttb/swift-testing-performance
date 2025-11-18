@@ -26,23 +26,18 @@ TestingPerformance provides comprehensive performance testing capabilities for t
 
 ### Measurement
 
-- ``TestingPerformance/measure(warmup:iterations:operation:)-5zs0y``
-- ``TestingPerformance/measure(warmup:iterations:operation:)-8tbt2``
-- ``TestingPerformance/time(operation:)``
-- ``TestingPerformance/time(operation:)-9h4h0``
-- ``Measurement``
-- ``Metric``
+- ``TestingPerformance/measure(warmup:iterations:operation:)-4kv1g``
+- ``TestingPerformance/measure(warmup:iterations:operation:)-32h7a``
+- ``TestingPerformance/time(operation:)-2qtt``
+- ``TestingPerformance/time(operation:)-21jsp``
+- ``TestingPerformance/Measurement``
+- ``TestingPerformance/Metric``
 
 ### Assertions and Expectations
 
-- ``TestingPerformance/expectPerformance(lessThan:warmup:iterations:metric:operation:)-7tkbz``
-- ``TestingPerformance/expectPerformance(lessThan:warmup:iterations:metric:operation:)-2y8rz``
+- ``TestingPerformance/expectPerformance(lessThan:warmup:iterations:metric:operation:)-5llun``
+- ``TestingPerformance/expectPerformance(lessThan:warmup:iterations:metric:operation:)-9621g``
 - ``TestingPerformance/expectNoRegression(current:baseline:tolerance:metric:)``
-
-### Performance Traits
-
-- ``_PerformanceTrait``
-- ``Trait/timed(iterations:warmup:threshold:maxAllocations:metric:)``
 
 ### Performance Comparison
 
@@ -50,22 +45,10 @@ TestingPerformance provides comprehensive performance testing capabilities for t
 - ``TestingPerformance/printComparisonReport(_:)``
 - ``PerformanceSuite``
 
-### Memory Allocation Tracking
-
-- ``TestingPerformance/captureAllocationStats()``
-- ``TestingPerformance/AllocationStats``
-
 ### Reporting and Formatting
 
 - ``TestingPerformance/printPerformance(_:_:allocations:)``
-- ``TestingPerformance/formatDuration(_:style:)``
-- ``TestingPerformance/DurationFormat``
-
-### Statistics
-
-- ``TestingPerformance/isSignificantlyDifferent(baseline:current:alpha:)``
-- ``TestingPerformance/isSignificantlyFaster(baseline:current:alpha:)``
-- ``TestingPerformance/isSignificantlySlower(baseline:current:alpha:)``
+- ``TestingPerformance/printComparisonReport(_:)``
 
 ### Platform-Specific Thresholds
 

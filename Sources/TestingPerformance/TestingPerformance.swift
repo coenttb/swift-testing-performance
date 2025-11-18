@@ -68,33 +68,21 @@ import Glibc
 ///
 /// ### Measurement
 ///
-/// - ``measure(warmup:iterations:operation:)-5zs0y``
-/// - ``measure(warmup:iterations:operation:)-8tbt2``
-/// - ``time(operation:)``
-/// - ``time(operation:)-9h4h0``
+/// - ``measure(warmup:iterations:operation:)-4kv1g``
+/// - ``measure(warmup:iterations:operation:)-32h7a``
+/// - ``time(operation:)-2qtt``
+/// - ``time(operation:)-21jsp``
 ///
 /// ### Assertions
 ///
-/// - ``expectPerformance(lessThan:warmup:iterations:metric:operation:)-7tkbz``
-/// - ``expectPerformance(lessThan:warmup:iterations:metric:operation:)-2y8rz``
+/// - ``expectPerformance(lessThan:warmup:iterations:metric:operation:)-5llun``
+/// - ``expectPerformance(lessThan:warmup:iterations:metric:operation:)-9621g``
 /// - ``expectNoRegression(current:baseline:tolerance:metric:)``
 ///
 /// ### Reporting
 ///
 /// - ``printPerformance(_:_:allocations:)``
-/// - ``formatDuration(_:style:)``
 /// - ``printComparisonReport(_:)``
-///
-/// ### Statistics
-///
-/// - ``isSignificantlyDifferent(baseline:current:alpha:)``
-/// - ``isSignificantlyFaster(baseline:current:alpha:)``
-/// - ``isSignificantlySlower(baseline:current:alpha:)``
-///
-/// ### Memory Tracking
-///
-/// - ``captureAllocationStats()``
-/// - ``AllocationStats``
 ///
 /// ### Error Handling
 ///
@@ -130,8 +118,7 @@ extension TestingPerformance {
     public enum Error: Swift.Error, CustomStringConvertible {
         /// Performance threshold was exceeded in a trait-based test.
         ///
-        /// Thrown when a test decorated with ``Trait/timed(iterations:warmup:threshold:maxAllocations:metric:)``
-        /// exceeds its performance budget.
+        /// Thrown when a test decorated with `.timed(threshold:)` exceeds its performance budget.
         ///
         /// - Parameters:
         ///   - test: Name of the failing test
@@ -153,7 +140,7 @@ extension TestingPerformance {
 
         /// Performance expectation assertion failed.
         ///
-        /// Thrown by ``TestingPerformance/expectPerformance(lessThan:warmup:iterations:metric:operation:)-7tkbz``
+        /// Thrown by ``TestingPerformance/expectPerformance(lessThan:warmup:iterations:metric:operation:)-5llun``
         /// when the measured performance exceeds the specified threshold.
         ///
         /// - Parameters:

@@ -143,5 +143,5 @@ Output:
 ## Next Steps
 
 - Learn about <doc:PerformanceTraits> for declarative testing
-- Explore ``Measurement`` for detailed metrics
+- Explore ``TestingPerformance/Measurement`` for detailed metrics
 - Use ``PerformanceComparison`` for regression detection
