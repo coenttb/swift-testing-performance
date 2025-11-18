@@ -53,12 +53,13 @@
                 }
 
                 // Initialize leak detector if requested
-                let leakDetector: MemoryAllocation.LeakDetector? = config.detectLeaks ? LeakDetector() : nil
+                let leakDetector: MemoryAllocation.LeakDetector? =
+                    config.detectLeaks ? LeakDetector() : nil
 
                 // Initialize peak memory tracker if requested or needed
                 let peakTracker: MemoryAllocation.PeakMemoryTracker? =
                     (config.peakMemoryLimit != nil || config.printResults)
-                        ? PeakMemoryTracker() : nil
+                    ? PeakMemoryTracker() : nil
 
                 #if os(Linux)
                     // Start tracking on Linux if we need allocation stats
