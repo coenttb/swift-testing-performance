@@ -63,9 +63,9 @@
 
                 for _ in 0..<config.iterations {
                     #if os(Linux)
-                    if config.maxAllocations != nil {
-                        TestingPerformance.startTracking()
-                    }
+                        if config.maxAllocations != nil {
+                            TestingPerformance.startTracking()
+                        }
                     #endif
 
                     let startStats = TestingPerformance.captureAllocationStats()
