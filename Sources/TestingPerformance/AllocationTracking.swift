@@ -66,19 +66,19 @@ extension TestingPerformance {
 
     #if os(Linux)
         private static func captureAllocationStatsLinux() -> TestingPerformance.AllocationStats {
-            // On Linux, we use mallinfo2 (glibc 2.33+) which replaced deprecated mallinfo
-            // This is a simplified implementation
-            // In production, might want to use jemalloc statistics or similar
-            #if canImport(Glibc)
-                let info = mallinfo2()
-                return TestingPerformance.AllocationStats(
-                    allocations: 0,  // mallinfo2 doesn't track count
-                    deallocations: 0,
-                    bytesAllocated: Int(info.uordblks)
-                )
-            #else
-                return TestingPerformance.AllocationStats()
-            #endif
+            // On Linux, mallinfo/mallinfo2 are not exposed through Swift's Glibc module
+            // For production use, consider using:
+            // - jemalloc statistics
+            // - tcmalloc heap profiling
+            // - Custom tracking via malloc hooks
+            // - /proc/self/status parsing
+            //
+            // For now, return stub data to allow tests to compile and run
+            return TestingPerformance.AllocationStats(
+                allocations: 0,
+                deallocations: 0,
+                bytesAllocated: 0
+            )
         }
     #endif
 }
