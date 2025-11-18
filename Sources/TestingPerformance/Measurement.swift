@@ -10,18 +10,101 @@ import Glibc
 #endif
 
 extension TestingPerformance {
-    /// Result of a performance measurement
+    /// Statistical performance measurement containing multiple duration samples.
     ///
-    /// Conforms to `Codable` for serialization support when Foundation is available.
-    /// Use with `JSONEncoder` or other encoders to export measurements.
+    /// `Measurement` stores the results of running a performance test multiple times
+    /// and provides statistical metrics like median, mean, percentiles, and standard deviation.
     ///
-    /// - Note: Available on platforms with Duration support (macOS 13+, iOS 16+, watchOS 9+, tvOS 16+)
+    /// ## Overview
+    ///
+    /// Create measurements using ``TestingPerformance/measure(warmup:iterations:operation:)-5zs0y``:
+    ///
+    /// ```swift
+    /// let (result, measurement) = TestingPerformance.measure(iterations: 100) {
+    ///     expensiveOperation()
+    /// }
+    ///
+    /// print("Median: \(measurement.median)")
+    /// print("p95: \(measurement.p95)")
+    /// ```
+    ///
+    /// ## Statistical Metrics
+    ///
+    /// - **Median** (``median``): Middle value, resistant to outliers
+    /// - **Mean** (``mean``): Average of all measurements
+    /// - **Percentiles** (``p50``, ``p75``, ``p90``, ``p95``, ``p99``, ``p999``): Values at specific percentiles
+    /// - **Min/Max** (``min``, ``max``): Fastest and slowest iterations
+    /// - **Standard Deviation** (``standardDeviation``): Measure of variation
+    ///
+    /// ## Comparison
+    ///
+    /// Measurements are ``Swift/Comparable`` by median value:
+    ///
+    /// ```swift
+    /// if measurement1 < measurement2 {
+    ///     print("measurement1 was faster")
+    /// }
+    /// ```
+    ///
+    /// ## Serialization
+    ///
+    /// Measurements conform to `Codable` for easy serialization:
+    ///
+    /// ```swift
+    /// let encoder = JSONEncoder()
+    /// encoder.outputFormatting = .prettyPrinted
+    /// let data = try encoder.encode(measurement)
+    /// ```
+    ///
+    /// ## Topics
+    ///
+    /// ### Creating Measurements
+    ///
+    /// - ``init(durations:)``
+    /// - ``durations``
+    ///
+    /// ### Central Tendency
+    ///
+    /// - ``median``
+    /// - ``mean``
+    /// - ``min``
+    /// - ``max``
+    ///
+    /// ### Percentiles
+    ///
+    /// - ``p50``
+    /// - ``p75``
+    /// - ``p90``
+    /// - ``p95``
+    /// - ``p99``
+    /// - ``p999``
+    /// - ``percentile(_:)``
+    ///
+    /// ### Variability
+    ///
+    /// - ``standardDeviation``
+    /// - ``variance``
     @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
     public struct Measurement: Sendable, Codable {
-        /// All measured durations
+        /// All measured durations from individual test iterations.
+        ///
+        /// Each duration represents a single execution of the measured operation.
+        /// The order matches the execution order, though most statistical metrics
+        /// are order-independent.
         public let durations: [Duration]
 
-        /// Create a measurement from durations
+        /// Creates a measurement from an array of durations.
+        ///
+        /// - Parameter durations: Individual duration measurements from test iterations
+        ///
+        /// Example:
+        /// ```swift
+        /// let measurement = Measurement(durations: [
+        ///     .milliseconds(10),
+        ///     .milliseconds(11),
+        ///     .milliseconds(10)
+        /// ])
+        /// ```
         public init(durations: [Duration]) {
             self.durations = durations
         }
@@ -45,59 +128,103 @@ extension TestingPerformance.Measurement: Comparable {
 
 @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 extension TestingPerformance.Measurement {
-    /// Minimum duration
+    /// Minimum duration across all iterations.
+    ///
+    /// Returns the fastest single iteration. Useful for identifying best-case performance.
+    ///
+    /// Returns `.zero` if no durations were measured.
     public var min: Duration {
         durations.min() ?? .zero
     }
-    
-    /// Maximum duration
+
+    /// Maximum duration across all iterations.
+    ///
+    /// Returns the slowest single iteration. Useful for identifying worst-case performance
+    /// or outliers caused by system interference.
+    ///
+    /// Returns `.zero` if no durations were measured.
     public var max: Duration {
         durations.max() ?? .zero
     }
-    
-    /// Median duration (50th percentile)
+
+    /// Median duration (50th percentile).
+    ///
+    /// The median is the middle value when all durations are sorted. It's resistant to
+    /// outliers and generally preferred over mean for performance testing.
+    ///
+    /// This is the default metric used by performance traits.
+    ///
+    /// Returns `.zero` if no durations were measured.
     public var median: Duration {
         percentile(0.5)
     }
 
-    /// Average (mean) duration
+    /// Average (mean) duration across all iterations.
+    ///
+    /// The mean is calculated as the sum of all durations divided by the count.
+    /// It's affected by outliers, which may or may not be desirable depending on your use case.
+    ///
+    /// Returns `.zero` if no durations were measured.
     public var mean: Duration {
         guard !durations.isEmpty else { return .zero }
         let total = durations.reduce(Duration.zero, +)
         return total / durations.count
     }
 
-    /// 50th percentile (same as median)
+    /// 50th percentile duration (same as ``median``).
+    ///
+    /// Provided for consistency with other percentile metrics.
     public var p50: Duration {
         percentile(0.5)
     }
 
-    /// 75th percentile duration
+    /// 75th percentile duration.
+    ///
+    /// 75% of iterations completed faster than this duration.
     public var p75: Duration {
         percentile(0.75)
     }
 
-    /// 90th percentile duration
+    /// 90th percentile duration.
+    ///
+    /// 90% of iterations completed faster than this duration.
     public var p90: Duration {
         percentile(0.90)
     }
 
-    /// 95th percentile duration
+    /// 95th percentile duration.
+    ///
+    /// 95% of iterations completed faster than this duration. Commonly used for
+    /// service-level objectives (SLOs) in production systems.
     public var p95: Duration {
         percentile(0.95)
     }
 
-    /// 99th percentile duration
+    /// 99th percentile duration.
+    ///
+    /// 99% of iterations completed faster than this duration. Useful for identifying
+    /// tail latency in latency-sensitive systems.
     public var p99: Duration {
         percentile(0.99)
     }
 
-    /// 99.9th percentile duration
+    /// 99.9th percentile duration.
+    ///
+    /// 99.9% of iterations completed faster than this duration. Identifies extreme outliers.
     public var p999: Duration {
         percentile(0.999)
     }
-    
-    /// Calculate percentile
+
+    /// Calculate a specific percentile.
+    ///
+    /// - Parameter p: Percentile to calculate, from 0.0 (minimum) to 1.0 (maximum)
+    /// - Returns: Duration at the specified percentile, or `.zero` if no durations
+    ///
+    /// Example:
+    /// ```swift
+    /// let p90 = measurement.percentile(0.90)  // 90th percentile
+    /// let p50 = measurement.percentile(0.50)  // Same as median
+    /// ```
     public func percentile(_ p: Double) -> Duration {
         guard !durations.isEmpty else { return .zero }
         let sorted = durations.sorted()
@@ -105,8 +232,13 @@ extension TestingPerformance.Measurement {
         let clampedIndex = Swift.min(index, sorted.count - 1)
         return sorted[clampedIndex]
     }
-    
-    /// Standard deviation
+
+    /// Standard deviation of duration measurements.
+    ///
+    /// Measures the amount of variation in the measurements. Lower standard deviation
+    /// indicates more consistent performance.
+    ///
+    /// Returns `.zero` if fewer than 2 measurements are available.
     public var standardDeviation: Duration {
         guard durations.count > 1 else { return .zero }
         let meanSeconds = mean.inSeconds

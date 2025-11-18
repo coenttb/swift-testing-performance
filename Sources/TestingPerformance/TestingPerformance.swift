@@ -9,35 +9,170 @@ import Darwin
 import Glibc
 #endif
 
-/// Namespace for TestingPerformance performance testing utilities
+/// Namespace for performance testing utilities integrated with Swift Testing.
 ///
-/// Provides measurement, formatting, and assertion functions for performance testing.
+/// TestingPerformance provides comprehensive tools for measuring, analyzing, and
+/// enforcing performance requirements in your Swift tests. All features work with
+/// zero external dependencies, relying only on Swift stdlib and platform APIs.
 ///
-/// Example:
+/// ## Overview
+///
+/// Use TestingPerformance to:
+/// - Measure execution time with statistical analysis
+/// - Track memory allocations during test execution
+/// - Compare performance across runs to detect regressions
+/// - Enforce performance budgets with declarative traits
+/// - Generate beautifully formatted performance reports
+///
+/// ## Basic Usage
+///
+/// The simplest way to measure performance is with the `.timed()` trait:
+///
 /// ```swift
-/// let (result, measurement) = TestingPerformance.measure {
-///     numbers.sum()
+/// import Testing
+/// import TestingPerformance
+///
+/// @Test(.timed())
+/// func arraySum() {
+///     let numbers = Array(1...10_000)
+///     _ = numbers.reduce(0, +)
 /// }
-/// TestingPerformance.printPerformance("sum", measurement)
 /// ```
+///
+/// For manual measurement without traits:
+///
+/// ```swift
+/// @Test
+/// func manualMeasurement() {
+///     let (result, measurement) = TestingPerformance.measure {
+///         expensiveOperation()
+///     }
+///
+///     TestingPerformance.printPerformance("operation", measurement)
+///     #expect(measurement.median < .milliseconds(10))
+/// }
+/// ```
+///
+/// ## Performance Budgets
+///
+/// Enforce maximum execution time to prevent performance regressions:
+///
+/// ```swift
+/// @Test(.timed(threshold: .milliseconds(5)))
+/// func mustBeFast() {
+///     criticalOperation()
+/// }
+/// ```
+///
+/// ## Topics
+///
+/// ### Measurement
+///
+/// - ``measure(warmup:iterations:operation:)-5zs0y``
+/// - ``measure(warmup:iterations:operation:)-8tbt2``
+/// - ``time(operation:)``
+/// - ``time(operation:)-9h4h0``
+///
+/// ### Assertions
+///
+/// - ``expectPerformance(lessThan:warmup:iterations:metric:operation:)-7tkbz``
+/// - ``expectPerformance(lessThan:warmup:iterations:metric:operation:)-2y8rz``
+/// - ``expectNoRegression(current:baseline:tolerance:metric:)``
+///
+/// ### Reporting
+///
+/// - ``printPerformance(_:_:allocations:)``
+/// - ``formatDuration(_:style:)``
+/// - ``printComparisonReport(_:)``
+///
+/// ### Statistics
+///
+/// - ``isSignificantlyDifferent(baseline:current:alpha:)``
+/// - ``isSignificantlyFaster(baseline:current:alpha:)``
+/// - ``isSignificantlySlower(baseline:current:alpha:)``
+///
+/// ### Memory Tracking
+///
+/// - ``captureAllocationStats()``
+/// - ``AllocationStats``
+///
+/// ### Error Handling
+///
+/// - ``Error``
 public enum TestingPerformance {}
 
 // MARK: - Error Types
 
 @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 extension TestingPerformance {
-    /// Errors that can occur during performance testing
+    /// Errors thrown during performance testing operations.
+    ///
+    /// These errors provide detailed information about performance violations,
+    /// including actual vs expected values and contextual information for debugging.
+    ///
+    /// All error cases conform to `CustomStringConvertible` to provide formatted,
+    /// human-readable error messages when tests fail.
+    ///
+    /// ## Topics
+    ///
+    /// ### Threshold Violations
+    ///
+    /// - ``thresholdExceeded(test:metric:expected:actual:)``
+    /// - ``performanceExpectationFailed(metric:threshold:actual:)``
+    ///
+    /// ### Memory Violations
+    ///
+    /// - ``allocationLimitExceeded(test:limit:actual:)``
+    ///
+    /// ### Regression Detection
+    ///
+    /// - ``regressionDetected(metric:baseline:current:regression:tolerance:)``
     public enum Error: Swift.Error, CustomStringConvertible {
-        /// Performance threshold was exceeded in a trait-based test
+        /// Performance threshold was exceeded in a trait-based test.
+        ///
+        /// Thrown when a test decorated with ``Trait/timed(iterations:warmup:threshold:maxAllocations:metric:)``
+        /// exceeds its performance budget.
+        ///
+        /// - Parameters:
+        ///   - test: Name of the failing test
+        ///   - metric: The metric that was checked (e.g., median, p95)
+        ///   - expected: The maximum allowed duration
+        ///   - actual: The measured duration that exceeded the threshold
         case thresholdExceeded(test: String, metric: Metric, expected: Duration, actual: Duration)
 
-        /// Memory allocation limit was exceeded
+        /// Memory allocation limit was exceeded during test execution.
+        ///
+        /// Thrown when a test with `maxAllocations` specified allocates more memory
+        /// than the configured limit.
+        ///
+        /// - Parameters:
+        ///   - test: Name of the failing test
+        ///   - limit: Maximum allowed bytes allocated
+        ///   - actual: Actual bytes allocated during the test
         case allocationLimitExceeded(test: String, limit: Int, actual: Int)
 
-        /// Performance expectation assertion failed
+        /// Performance expectation assertion failed.
+        ///
+        /// Thrown by ``TestingPerformance/expectPerformance(lessThan:warmup:iterations:metric:operation:)-7tkbz``
+        /// when the measured performance exceeds the specified threshold.
+        ///
+        /// - Parameters:
+        ///   - metric: The metric that was checked
+        ///   - threshold: The maximum allowed duration
+        ///   - actual: The measured duration that exceeded the threshold
         case performanceExpectationFailed(metric: Metric, threshold: Duration, actual: Duration)
 
-        /// Performance regression was detected
+        /// Performance regression was detected when comparing to a baseline.
+        ///
+        /// Thrown by ``TestingPerformance/expectNoRegression(current:baseline:tolerance:metric:)``
+        /// when current performance has regressed beyond the allowed tolerance.
+        ///
+        /// - Parameters:
+        ///   - metric: The metric that was compared
+        ///   - baseline: The baseline (historical) duration
+        ///   - current: The current (measured) duration
+        ///   - regression: The regression as a fraction (e.g., 0.15 = 15% slower)
+        ///   - tolerance: The maximum allowed regression fraction
         case regressionDetected(metric: Metric, baseline: Duration, current: Duration, regression: Double, tolerance: Double)
 
         public var description: String {
