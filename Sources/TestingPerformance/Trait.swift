@@ -189,7 +189,8 @@
 
                 if sortedAllocations.count % 2 == 0 {
                     // Even number of samples: average the two middle values
-                    medianAllocationBytes = (sortedAllocations[medianIndex - 1] + sortedAllocations[medianIndex]) / 2
+                    medianAllocationBytes =
+                        (sortedAllocations[medianIndex - 1] + sortedAllocations[medianIndex]) / 2
                 } else {
                     // Odd number of samples: take the middle value
                     medianAllocationBytes = sortedAllocations[medianIndex]
