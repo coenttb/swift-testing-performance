@@ -7,8 +7,11 @@ import Testing
 import TestingPerformance
 
 extension PerformanceTests {
-    @Suite(.serialized)
+    @Suite("Allocation Tracking", .serialized)
     struct AllocationTracking {
+        // Note: .serialized is required for accurate allocation tracking
+        // On Darwin, malloc_zone_statistics returns process-wide stats
+        // Parallel tests would interfere with each other's measurements
 
         @Test(.timed(maxAllocations: 500_000))
         func `allocation-free iteration`() {

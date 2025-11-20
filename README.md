@@ -423,8 +423,8 @@ func `slow operation`() { ... }
 
 TestingPerformance tracks memory allocations during test execution using platform-specific malloc statistics:
 
-- **Darwin**: `malloc_statistics_t` via `malloc_zone_statistics()`
-- **Linux**: `mallinfo()` via glibc
+- **Darwin**: `malloc_statistics_t` via `malloc_zone_statistics()` (process-wide)
+- **Linux**: `mallinfo()` via glibc (process-wide)
 
 ### Interpreting Allocation Stats
 
@@ -452,6 +452,36 @@ func `zero allocation test`() {
         sum += num
     }
     _ = sum
+}
+```
+
+### Parallel Test Execution
+
+**Allocation limits use median values**, making them robust to parallel test execution:
+
+```swift
+// These tests can run in parallel - median filtering handles interference
+@Suite("Parallel Safe")
+struct ParallelTests {
+    @Test(.timed(maxAllocations: 500_000))
+    func test1() { /* allocations */ }
+
+    @Test(.timed(maxAllocations: 500_000))
+    func test2() { /* allocations */ }
+}
+```
+
+On Darwin, `malloc_zone_statistics` returns process-wide statistics. When tests run in parallel:
+- Some iterations may capture allocations from concurrent tests
+- **Median filtering removes this interference**
+- The middle value represents your test's true allocation behavior
+
+For most accurate allocation tracking, use `.serialized`:
+
+```swift
+@Suite("Allocation Tracking", .serialized)
+struct AllocationTests {
+    // Tests run sequentially - no interference
 }
 ```
 
