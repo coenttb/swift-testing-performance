@@ -178,12 +178,28 @@
                 guard let maxAllocations = config.maxAllocations, !allocationDeltas.isEmpty else {
                     return
                 }
-                let maxAllocationBytes = allocationDeltas.max() ?? 0
-                guard maxAllocationBytes <= maxAllocations else {
+
+                // Use median instead of max to be robust to parallel test interference
+                // On Darwin, malloc_zone_statistics returns process-wide stats
+                // In parallel execution, some iterations may capture allocations from other tests
+                // Median filters out interference while still catching real allocation issues
+                let sortedAllocations = allocationDeltas.sorted()
+                let medianIndex = sortedAllocations.count / 2
+                let medianAllocationBytes: Int
+
+                if sortedAllocations.count % 2 == 0 {
+                    // Even number of samples: average the two middle values
+                    medianAllocationBytes = (sortedAllocations[medianIndex - 1] + sortedAllocations[medianIndex]) / 2
+                } else {
+                    // Odd number of samples: take the middle value
+                    medianAllocationBytes = sortedAllocations[medianIndex]
+                }
+
+                guard medianAllocationBytes <= maxAllocations else {
                     throw TestingPerformance.Error.allocationLimitExceeded(
                         test: name,
                         limit: maxAllocations,
-                        actual: maxAllocationBytes
+                        actual: medianAllocationBytes
                     )
                 }
             }
