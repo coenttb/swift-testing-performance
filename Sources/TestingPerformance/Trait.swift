@@ -18,8 +18,10 @@
         @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
         public struct _PerformanceTrait: TestScoping, TestTrait, SuiteTrait {
             let configuration: TestingPerformance.Configuration
+            let sourceLocation: SourceLocation
 
             @TaskLocal static var currentConfig: TestingPerformance.Configuration?
+            @TaskLocal static var currentSourceLocation: SourceLocation?
 
             public var isRecursive: Bool { true }
 
@@ -31,20 +33,26 @@
                 // Merge configurations (parent + current)
                 let effectiveConfig =
                     Self.currentConfig?.merged(with: configuration) ?? configuration
+                // Use the most recent source location (innermost trait wins)
+                let effectiveSourceLocation = sourceLocation
 
                 try await Self.$currentConfig.withValue(effectiveConfig) {
-                    // Run test with performance measurement
-                    try await measureTest(
-                        name: test.name,
-                        config: effectiveConfig,
-                        performing: function
-                    )
+                    try await Self.$currentSourceLocation.withValue(effectiveSourceLocation) {
+                        // Run test with performance measurement
+                        try await measureTest(
+                            name: test.name,
+                            config: effectiveConfig,
+                            sourceLocation: effectiveSourceLocation,
+                            performing: function
+                        )
+                    }
                 }
             }
 
             private func measureTest(
                 name: String,
                 config: TestingPerformance.Configuration,
+                sourceLocation: SourceLocation,
                 performing function: @Sendable () async throws -> Void
             ) async throws {
                 guard config.enabled else {
@@ -101,7 +109,12 @@
                     leakDetector: leakDetector,
                     peakTracker: peakTracker
                 )
-                try reportAndValidateResults(name: name, config: config, context: context)
+                reportAndValidateResults(
+                    name: name,
+                    config: config,
+                    context: context,
+                    sourceLocation: sourceLocation
+                )
             }
 
             private struct ValidationContext {
@@ -114,8 +127,9 @@
             private func reportAndValidateResults(
                 name: String,
                 config: TestingPerformance.Configuration,
-                context: ValidationContext
-            ) throws {
+                context: ValidationContext,
+                sourceLocation: SourceLocation
+            ) {
                 // Print if requested
                 if config.printResults {
                     let peakBytes = context.peakTracker?.peakBytes
@@ -129,52 +143,66 @@
                 }
 
                 // Validate performance threshold
-                try validatePerformanceThreshold(
+                validatePerformanceThreshold(
                     name: name,
                     config: config,
-                    measurement: context.measurement
+                    measurement: context.measurement,
+                    sourceLocation: sourceLocation
                 )
 
                 // Validate allocation limit
-                try validateAllocationLimit(
+                validateAllocationLimit(
                     name: name,
                     config: config,
-                    allocationDeltas: context.allocationDeltas
+                    allocationDeltas: context.allocationDeltas,
+                    sourceLocation: sourceLocation
                 )
 
                 // Validate no memory leaks
-                try validateNoMemoryLeaks(name: name, detector: context.leakDetector)
+                validateNoMemoryLeaks(
+                    name: name,
+                    detector: context.leakDetector,
+                    sourceLocation: sourceLocation
+                )
 
                 // Validate peak memory limit
-                try validatePeakMemoryLimit(
+                validatePeakMemoryLimit(
                     name: name,
                     config: config,
-                    tracker: context.peakTracker
+                    tracker: context.peakTracker,
+                    sourceLocation: sourceLocation
                 )
             }
 
             private func validatePerformanceThreshold(
                 name: String,
                 config: TestingPerformance.Configuration,
-                measurement: TestingPerformance.Measurement
-            ) throws {
+                measurement: TestingPerformance.Measurement,
+                sourceLocation: SourceLocation
+            ) {
                 guard let threshold = config.threshold else { return }
                 let metric = config.metric.extract(from: measurement)
                 guard metric <= threshold else {
-                    throw TestingPerformance.Error.thresholdExceeded(
+                    let error = TestingPerformance.Error.thresholdExceeded(
                         test: name,
                         metric: config.metric,
                         expected: threshold,
                         actual: metric
                     )
+                    Issue.record(
+                        Comment(rawValue: error.description),
+                        sourceLocation: sourceLocation
+                    )
+                    return
                 }
             }
 
             private func validateAllocationLimit(
                 name: String,
                 config: TestingPerformance.Configuration,
-                allocationDeltas: [Int]
-            ) throws {
+                allocationDeltas: [Int],
+                sourceLocation: SourceLocation
+            ) {
                 guard let maxAllocations = config.maxAllocations, !allocationDeltas.isEmpty else {
                     return
                 }
@@ -197,24 +225,34 @@
                 }
 
                 guard medianAllocationBytes <= maxAllocations else {
-                    throw TestingPerformance.Error.allocationLimitExceeded(
+                    let error = TestingPerformance.Error.allocationLimitExceeded(
                         test: name,
                         limit: maxAllocations,
                         actual: medianAllocationBytes
                     )
+                    Issue.record(
+                        Comment(rawValue: error.description),
+                        sourceLocation: sourceLocation
+                    )
+                    return
                 }
             }
 
             private func validateNoMemoryLeaks(
                 name: String,
-                detector: MemoryAllocation.LeakDetector?
-            ) throws {
+                detector: MemoryAllocation.LeakDetector?,
+                sourceLocation: SourceLocation
+            ) {
                 guard let detector = detector else { return }
                 if detector.hasLeaks() {
-                    throw TestingPerformance.Error.memoryLeakDetected(
+                    let error = TestingPerformance.Error.memoryLeakDetected(
                         test: name,
                         netAllocations: detector.netAllocations,
                         netBytes: detector.netBytes
+                    )
+                    Issue.record(
+                        Comment(rawValue: error.description),
+                        sourceLocation: sourceLocation
                     )
                 }
             }
@@ -222,15 +260,21 @@
             private func validatePeakMemoryLimit(
                 name: String,
                 config: TestingPerformance.Configuration,
-                tracker: MemoryAllocation.PeakMemoryTracker?
-            ) throws {
+                tracker: MemoryAllocation.PeakMemoryTracker?,
+                sourceLocation: SourceLocation
+            ) {
                 guard let limit = config.peakMemoryLimit, let tracker = tracker else { return }
                 guard tracker.peakBytes <= limit else {
-                    throw TestingPerformance.Error.peakMemoryExceeded(
+                    let error = TestingPerformance.Error.peakMemoryExceeded(
                         test: name,
                         limit: limit,
                         actual: tracker.peakBytes
                     )
+                    Issue.record(
+                        Comment(rawValue: error.description),
+                        sourceLocation: sourceLocation
+                    )
+                    return
                 }
             }
 
@@ -360,7 +404,8 @@
                 maxAllocations: Int? = nil,
                 metric: TestingPerformance.Metric = .median,
                 detectLeaks: Bool = false,
-                peakMemoryLimit: Int? = nil
+                peakMemoryLimit: Int? = nil,
+                sourceLocation: SourceLocation = #_sourceLocation
             ) -> Self {
                 Self(
                     configuration: TestingPerformance.Configuration(
@@ -372,7 +417,8 @@
                         maxAllocations: maxAllocations,
                         detectLeaks: detectLeaks,
                         peakMemoryLimit: peakMemoryLimit
-                    )
+                    ),
+                    sourceLocation: sourceLocation
                 )
             }
 
@@ -387,11 +433,14 @@
             ///     // Test automatically fails if memory leaks
             /// }
             /// ```
-            public static func detectLeaks() -> Self {
+            public static func detectLeaks(
+                sourceLocation: SourceLocation = #_sourceLocation
+            ) -> Self {
                 Self(
                     configuration: TestingPerformance.Configuration(
                         detectLeaks: true
-                    )
+                    ),
+                    sourceLocation: sourceLocation
                 )
             }
 
@@ -408,11 +457,15 @@
             /// ```
             ///
             /// - Parameter limit: Optional maximum peak memory in bytes
-            public static func trackPeakMemory(limit: Int? = nil) -> Self {
+            public static func trackPeakMemory(
+                limit: Int? = nil,
+                sourceLocation: SourceLocation = #_sourceLocation
+            ) -> Self {
                 Self(
                     configuration: TestingPerformance.Configuration(
                         peakMemoryLimit: limit
-                    )
+                    ),
+                    sourceLocation: sourceLocation
                 )
             }
         }
