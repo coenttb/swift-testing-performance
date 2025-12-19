@@ -3,7 +3,6 @@
 //
 // Internal extensions for Swift standard library Duration
 
-@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 extension Duration {
     /// Create a Duration from seconds (internal utility)
     static func seconds(_ value: Double) -> Duration {

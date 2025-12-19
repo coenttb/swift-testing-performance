@@ -3,13 +3,6 @@
 //
 // Performance threshold assertions for Swift Testing
 
-#if canImport(Darwin)
-    import Darwin
-#elseif canImport(Glibc)
-    import Glibc
-#endif
-
-@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 extension TestingPerformance {
     /// Assert that an operation completes within a duration threshold
     ///
@@ -75,7 +68,6 @@ extension TestingPerformance {
     }
 }
 
-@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 extension TestingPerformance {
     /// Performance metrics that can be asserted against
     public enum Metric: String, Sendable {
@@ -99,7 +91,6 @@ extension TestingPerformance {
     }
 }
 
-@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 extension TestingPerformance {
     /// Performance regression detector
     ///

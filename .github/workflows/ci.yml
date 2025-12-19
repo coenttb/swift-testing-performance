@@ -95,3 +95,23 @@ jobs:
       # Note: swift test builds automatically
       - name: Test (Swift 6.2)
         run: swift test -c release
+
+  # Windows compatibility check
+  windows-latest:
+    name: Windows (Swift 6.2, release)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: SwiftyLab/setup-swift@latest
+        with:
+          swift-version: "6.2"
+
+      - name: Print Swift version
+        run: swift --version
+
+      - name: Build
+        run: swift build -c release
+
+      - name: Test
+        run: swift test -c release

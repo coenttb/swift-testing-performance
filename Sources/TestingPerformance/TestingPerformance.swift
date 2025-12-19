@@ -3,11 +3,7 @@
 //
 // Main namespace and core types
 
-#if canImport(Darwin)
-    import Darwin
-#elseif canImport(Glibc)
-    import Glibc
-#endif
+import Numerics
 
 /// Namespace for performance testing utilities integrated with Swift Testing.
 ///
@@ -91,7 +87,6 @@ public enum TestingPerformance {}
 
 // MARK: - Error Types
 
-@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 extension TestingPerformance {
     /// Errors thrown during performance testing operations.
     ///
@@ -262,7 +257,7 @@ extension TestingPerformance {
         }
 
         private func formatNumber(_ value: Double, decimals: Int) -> String {
-            let multiplier = pow(10.0, Double(decimals))
+            let multiplier = Double.pow(10.0, Double(decimals))
             let rounded = (value * multiplier).rounded() / multiplier
 
             let integerPart = Int(rounded)

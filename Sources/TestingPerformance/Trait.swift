@@ -3,19 +3,12 @@
 //
 // Performance measurement traits for Swift Testing
 
-#if canImport(Darwin)
-    import Darwin
-#elseif canImport(Glibc)
-    import Glibc
-#endif
-
 #if canImport(Testing)
     @_exported import Testing
 
     #if compiler(>=6.0)
 
         @_documentation(visibility: private)
-        @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
         public struct _PerformanceTrait: TestScoping, TestTrait, SuiteTrait {
             let configuration: TestingPerformance.Configuration
             let sourceLocation: SourceLocation
@@ -296,7 +289,6 @@
             }
         }
 
-        @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
         extension TestingPerformance {
             struct Configuration: Sendable {
                 var enabled: Bool
@@ -349,7 +341,6 @@
 
         // MARK: - Public API
 
-        @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
         extension Trait where Self == _PerformanceTrait {
             /// Measure test execution time with detailed statistics
             ///

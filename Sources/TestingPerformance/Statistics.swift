@@ -3,13 +3,8 @@
 //
 // Statistical significance testing
 
-#if canImport(Darwin)
-    import Darwin
-#elseif canImport(Glibc)
-    import Glibc
-#endif
+import Numerics
 
-@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 extension TestingPerformance.Measurement {
 
     /// Test if this measurement is significantly different from another
@@ -55,7 +50,7 @@ extension TestingPerformance.Measurement {
 
         // Welch's t-statistic
         let numerator = mean1 - mean2
-        let denominator = sqrt((var1 / n1) + (var2 / n2))
+        let denominator = ((var1 / n1) + (var2 / n2)).squareRoot()
 
         guard denominator > 0 else {
             // Special case: zero variance means all samples are identical
@@ -66,8 +61,11 @@ extension TestingPerformance.Measurement {
         let tStatistic = abs(numerator / denominator)
 
         // Welch-Satterthwaite degrees of freedom
-        let numeratorDF = pow((var1 / n1) + (var2 / n2), 2)
-        let denominatorDF = (pow(var1 / n1, 2) / (n1 - 1)) + (pow(var2 / n2, 2) / (n2 - 1))
+        let sumOfVarianceRatios = (var1 / n1) + (var2 / n2)
+        let numeratorDF = sumOfVarianceRatios * sumOfVarianceRatios
+        let var1Ratio = var1 / n1
+        let var2Ratio = var2 / n2
+        let denominatorDF = (var1Ratio * var1Ratio / (n1 - 1)) + (var2Ratio * var2Ratio / (n2 - 1))
         let degreesOfFreedom = numeratorDF / denominatorDF
 
         // Critical value for two-tailed test
@@ -108,7 +106,7 @@ extension TestingPerformance.Measurement {
         let var2 = other.variance
 
         let numerator = mean1 - mean2
-        let denominator = sqrt((var1 / n1) + (var2 / n2))
+        let denominator = ((var1 / n1) + (var2 / n2)).squareRoot()
 
         guard denominator > 0 else {
             // Special case: zero variance means all samples are identical
@@ -118,8 +116,11 @@ extension TestingPerformance.Measurement {
 
         let tStatistic = numerator / denominator  // Negative because mean1 < mean2
 
-        let numeratorDF = pow((var1 / n1) + (var2 / n2), 2)
-        let denominatorDF = (pow(var1 / n1, 2) / (n1 - 1)) + (pow(var2 / n2, 2) / (n2 - 1))
+        let sumOfVarianceRatios2 = (var1 / n1) + (var2 / n2)
+        let numeratorDF = sumOfVarianceRatios2 * sumOfVarianceRatios2
+        let var1Ratio2 = var1 / n1
+        let var2Ratio2 = var2 / n2
+        let denominatorDF = (var1Ratio2 * var1Ratio2 / (n1 - 1)) + (var2Ratio2 * var2Ratio2 / (n2 - 1))
         let degreesOfFreedom = numeratorDF / denominatorDF
 
         let alpha = 1.0 - confidenceLevel

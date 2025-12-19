@@ -3,11 +3,7 @@
 //
 // Performance measurement primitives for Swift Testing
 
-#if canImport(Darwin)
-    import Darwin
-#elseif canImport(Glibc)
-    import Glibc
-#endif
+import Numerics
 
 extension TestingPerformance {
     /// Statistical performance measurement containing multiple duration samples.
@@ -83,8 +79,7 @@ extension TestingPerformance {
     /// ### Variability
     ///
     /// - ``standardDeviation``
-    @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
-    public struct Measurement: Sendable, Codable {
+        public struct Measurement: Sendable, Codable {
         /// All measured durations from individual test iterations.
         ///
         /// Each duration represents a single execution of the measured operation.
@@ -112,7 +107,6 @@ extension TestingPerformance {
 
 // MARK: - Comparable
 
-@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 extension TestingPerformance.Measurement: Comparable {
     /// Compares measurements by median duration
     public static func < (
@@ -131,7 +125,6 @@ extension TestingPerformance.Measurement: Comparable {
     }
 }
 
-@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 extension TestingPerformance.Measurement {
     /// Minimum duration across all iterations.
     ///
@@ -252,13 +245,12 @@ extension TestingPerformance.Measurement {
                 let diff = duration.inSeconds - meanSeconds
                 return acc + (diff * diff)
             } / Double(durations.count - 1)
-        return .seconds(sqrt(variance))
+        return .seconds(variance.squareRoot())
     }
 }
 
 // MARK: - Measurement API
 
-@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 extension TestingPerformance {
     /// Measure performance of an operation
     ///
@@ -360,7 +352,6 @@ extension TestingPerformance {
 
 // MARK: - Duration Formatting
 
-@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 extension TestingPerformance {
     /// Format options for duration display
     public enum Format {
@@ -400,7 +391,7 @@ extension TestingPerformance {
         }
 
         private func formatNumber(_ value: Double, decimals: Int) -> String {
-            let multiplier = pow(10.0, Double(decimals))
+            let multiplier = Double.pow(10.0, Double(decimals))
             let rounded = (value * multiplier).rounded() / multiplier
 
             let integerPart = Int(rounded)
@@ -420,7 +411,6 @@ extension TestingPerformance {
     }
 }
 
-@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 extension TestingPerformance {
     /// Format a duration for performance display
     ///

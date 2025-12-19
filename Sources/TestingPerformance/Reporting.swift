@@ -3,13 +3,16 @@
 //
 // Performance test reporting and formatting
 
+import Numerics
+
 #if canImport(Darwin)
     import Darwin
 #elseif canImport(Glibc)
     import Glibc
+#elseif os(Windows)
+    import CRT
 #endif
 
-@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 extension TestingPerformance {
     /// Print a performance measurement summary
     ///
@@ -76,7 +79,7 @@ extension TestingPerformance {
     }
 
     private static func formatNumber(_ value: Double, decimals: Int) -> String {
-        let multiplier = pow(10.0, Double(decimals))
+        let multiplier = Double.pow(10.0, Double(decimals))
         let rounded = (value * multiplier).rounded() / multiplier
 
         let integerPart = Int(rounded)
@@ -97,7 +100,6 @@ extension TestingPerformance {
 
 // MARK: - ANSI Color Support
 
-@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 extension TestingPerformance {
     /// ANSI color codes for terminal output
     internal enum ANSIColor: String {
@@ -145,7 +147,6 @@ extension TestingPerformance {
 }
 
 /// Performance comparison report
-@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 public struct PerformanceComparison: Sendable {
     public let name: String
     public let current: TestingPerformance.Measurement
@@ -225,7 +226,6 @@ public struct PerformanceComparison: Sendable {
     }
 }
 
-@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 extension TestingPerformance {
     /// Print comparison report for multiple benchmarks
     public static func printComparisonReport(_ comparisons: [PerformanceComparison]) {
@@ -273,7 +273,6 @@ extension TestingPerformance {
 ///
 /// suite.printReport()
 /// ```
-@available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
 public struct PerformanceSuite {
     /// Name of the performance suite for reporting.
     public let name: String
