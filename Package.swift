@@ -4,6 +4,13 @@ import PackageDescription
 
 let package = Package(
     name: "swift-testing-performance",
+    platforms: [
+        .macOS(.v26),
+        .iOS(.v26),
+        .tvOS(.v26),
+        .watchOS(.v26),
+        .visionOS(.v26),
+    ],
     products: [
         .library(
             name: "TestingPerformance",
@@ -11,7 +18,7 @@ let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/coenttb/swift-memory-allocation", from: "0.1.0")
+        .package(url: "https://github.com/coenttb/swift-memory-allocation", from: "0.2.0")
     ],
     targets: [
         .target(
