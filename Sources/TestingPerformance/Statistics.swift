@@ -120,7 +120,8 @@ extension TestingPerformance.Measurement {
         let numeratorDF = sumOfVarianceRatios2 * sumOfVarianceRatios2
         let var1Ratio2 = var1 / n1
         let var2Ratio2 = var2 / n2
-        let denominatorDF = (var1Ratio2 * var1Ratio2 / (n1 - 1)) + (var2Ratio2 * var2Ratio2 / (n2 - 1))
+        let denominatorDF =
+            (var1Ratio2 * var1Ratio2 / (n1 - 1)) + (var2Ratio2 * var2Ratio2 / (n2 - 1))
         let degreesOfFreedom = numeratorDF / denominatorDF
 
         let alpha = 1.0 - confidenceLevel

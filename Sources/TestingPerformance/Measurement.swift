@@ -79,7 +79,7 @@ extension TestingPerformance {
     /// ### Variability
     ///
     /// - ``standardDeviation``
-        public struct Measurement: Sendable, Codable {
+    public struct Measurement: Sendable, Codable {
         /// All measured durations from individual test iterations.
         ///
         /// Each duration represents a single execution of the measured operation.
