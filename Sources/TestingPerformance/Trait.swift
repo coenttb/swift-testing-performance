@@ -78,15 +78,25 @@
                 var durations: [Duration] = []
                 var allocationDeltas: [Int] = []
 
+                // Determine if we need allocation tracking
+                let needsAllocationTracking = config.trackAllocations &&
+                    (config.maxAllocations != nil || config.printResults)
+
                 for _ in 0..<config.iterations {
-                    // Use AllocationTracker.measure() for cleaner allocation tracking
-                    let result = try await measureWithAllocations(function)
+                    if needsAllocationTracking {
+                        // Use AllocationTracker.measure() for allocation tracking
+                        let result = try await measureWithAllocations(function)
+                        durations.append(result.duration)
 
-                    durations.append(result.duration)
-
-                    // Track allocation delta if monitoring allocations
-                    if config.maxAllocations != nil {
-                        allocationDeltas.append(result.stats.bytesAllocated)
+                        // Track allocation delta if monitoring allocations
+                        if config.maxAllocations != nil {
+                            allocationDeltas.append(result.stats.bytesAllocated)
+                        }
+                    } else {
+                        // Fast path: just measure duration without allocation tracking overhead
+                        let start = ContinuousClock.now
+                        try await function()
+                        durations.append(ContinuousClock.now - start)
                     }
 
                     // Sample peak memory if tracking
@@ -297,6 +307,7 @@
                 var printResults: Bool
                 var threshold: Duration?
                 var metric: Metric
+                var trackAllocations: Bool
                 var maxAllocations: Int?
                 var detectLeaks: Bool
                 var peakMemoryLimit: Int?
@@ -308,6 +319,7 @@
                     printResults: Bool = false,
                     threshold: Duration? = nil,
                     metric: Metric = .median,
+                    trackAllocations: Bool = true,
                     maxAllocations: Int? = nil,
                     detectLeaks: Bool = false,
                     peakMemoryLimit: Int? = nil
@@ -318,6 +330,7 @@
                     self.printResults = printResults
                     self.threshold = threshold
                     self.metric = metric
+                    self.trackAllocations = trackAllocations
                     self.maxAllocations = maxAllocations
                     self.detectLeaks = detectLeaks
                     self.peakMemoryLimit = peakMemoryLimit
@@ -331,6 +344,7 @@
                         printResults: other.printResults,
                         threshold: other.threshold ?? self.threshold,
                         metric: other.metric,
+                        trackAllocations: other.trackAllocations,
                         maxAllocations: other.maxAllocations ?? self.maxAllocations,
                         detectLeaks: other.detectLeaks,
                         peakMemoryLimit: other.peakMemoryLimit ?? self.peakMemoryLimit
@@ -379,10 +393,21 @@
             /// }
             /// ```
             ///
+            /// For pure timing without allocation tracking overhead:
+            /// ```swift
+            /// @Test(.timed(trackAllocations: false))
+            /// func lowOverheadBenchmark() {
+            ///     // Allocation tracking disabled for minimal measurement overhead
+            ///     expensiveOperation()
+            /// }
+            /// ```
+            ///
             /// - Parameters:
             ///   - iterations: Number of measurement runs (default: 10)
             ///   - warmup: Number of untimed warmup runs (default: 0)
             ///   - threshold: Optional performance budget - test fails if exceeded
+            ///   - trackAllocations: Whether to track memory allocations (default: true).
+            ///     Set to `false` for lower measurement overhead when allocation stats aren't needed.
             ///   - maxAllocations: Optional memory allocation limit in bytes - test fails if exceeded
             ///   - metric: Metric to check against threshold (default: .median)
             ///
@@ -392,6 +417,7 @@
                 iterations: Int = 10,
                 warmup: Int = 0,
                 threshold: Duration? = nil,
+                trackAllocations: Bool = true,
                 maxAllocations: Int? = nil,
                 metric: TestingPerformance.Metric = .median,
                 detectLeaks: Bool = false,
@@ -405,6 +431,7 @@
                         printResults: true,
                         threshold: threshold,
                         metric: metric,
+                        trackAllocations: trackAllocations,
                         maxAllocations: maxAllocations,
                         detectLeaks: detectLeaks,
                         peakMemoryLimit: peakMemoryLimit
