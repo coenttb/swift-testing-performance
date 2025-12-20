@@ -79,8 +79,8 @@
                 var allocationDeltas: [Int] = []
 
                 // Determine if we need allocation tracking
-                let needsAllocationTracking = config.trackAllocations &&
-                    (config.maxAllocations != nil || config.printResults)
+                let needsAllocationTracking =
+                    config.trackAllocations && (config.maxAllocations != nil || config.printResults)
 
                 for _ in 0..<config.iterations {
                     if needsAllocationTracking {
