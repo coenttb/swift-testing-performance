@@ -19,7 +19,7 @@ jobs:
     name: macOS (Swift 6.2, debug)
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Select Xcode 26.0
         run: sudo xcode-select -s /Applications/Xcode_26.0.app
@@ -63,7 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     container: swift:6.2
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Cache Swift packages
         uses: actions/cache@v4
@@ -83,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     container: swift:6.2
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Cache Swift packages
         uses: actions/cache@v4
@@ -101,7 +101,7 @@ jobs:
     name: Windows (Swift 6.2, release)
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: SwiftyLab/setup-swift@latest
         with:
